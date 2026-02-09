@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0e0618" />
+  <title>OrchestraAI - AI-Powered Project Management Automation</title>
+  <meta name="description" content="Orchestrate your workflow with intelligence. Automate PDF project analysis, task generation, and team coordination with AI." />
+
+  <!-- Google Font: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          borderRadius: { lg: 'var(--radius)', md: 'calc(var(--radius) - 2px)', sm: 'calc(var(--radius) - 4px)' },
+          colors: {
+            background: 'hsl(var(--background))',
+            foreground: 'hsl(var(--foreground))',
+            card: { DEFAULT: 'hsl(var(--card))', foreground: 'hsl(var(--card-foreground))' },
+            popover: { DEFAULT: 'hsl(var(--popover))', foreground: 'hsl(var(--popover-foreground))' },
+            primary: { DEFAULT: 'hsl(var(--primary))', foreground: 'hsl(var(--primary-foreground))' },
+            secondary: { DEFAULT: 'hsl(var(--secondary))', foreground: 'hsl(var(--secondary-foreground))' },
+            muted: { DEFAULT: 'hsl(var(--muted))', foreground: 'hsl(var(--muted-foreground))' },
+            accent: { DEFAULT: 'hsl(var(--accent))', foreground: 'hsl(var(--accent-foreground))' },
+            destructive: { DEFAULT: 'hsl(var(--destructive))', foreground: 'hsl(var(--destructive-foreground))' },
+            border: 'hsl(var(--border))',
+            input: 'hsl(var(--input))',
+            ring: 'hsl(var(--ring))',
+          },
+        },
+      },
+    }
+  </script>
+
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .text-balance { text-wrap: balance; }
+    }
+  </style>
+
+  <style>
+    /* ---- CSS Custom Properties (Light theme) ---- */
+    :root {
+      --background: 270 20% 98%;
+      --foreground: 270 50% 8%;
+      --card: 270 25% 96%;
+      --card-foreground: 270 50% 8%;
+      --popover: 270 25% 96%;
+      --popover-foreground: 270 50% 8%;
+      --primary: 263 70% 50%;
+      --primary-foreground: 0 0% 100%;
+      --secondary: 270 20% 92%;
+      --secondary-foreground: 270 40% 15%;
+      --muted: 270 15% 93%;
+      --muted-foreground: 270 10% 42%;
+      --accent: 263 70% 50%;
+      --accent-foreground: 0 0% 100%;
+      --destructive: 0 84% 60%;
+      --destructive-foreground: 0 0% 98%;
+      --border: 270 15% 88%;
+      --input: 270 15% 88%;
+      --ring: 263 70% 50%;
+      --radius: 0.75rem;
+    }
+
+    /* ---- Dark theme ---- */
+    .dark {
+      --background: 270 40% 4%;
+      --foreground: 270 10% 93%;
+      --card: 270 35% 8%;
+      --card-foreground: 270 10% 93%;
+      --popover: 270 35% 8%;
+      --popover-foreground: 270 10% 93%;
+      --primary: 263 70% 58%;
+      --primary-foreground: 0 0% 100%;
+      --secondary: 270 30% 12%;
+      --secondary-foreground: 270 10% 93%;
+      --muted: 270 25% 14%;
+      --muted-foreground: 270 10% 50%;
+      --accent: 263 70% 58%;
+      --accent-foreground: 0 0% 100%;
+      --destructive: 0 62% 30%;
+      --destructive-foreground: 0 0% 98%;
+      --border: 270 25% 16%;
+      --input: 270 25% 16%;
+      --ring: 263 70% 58%;
+    }
+
+    *, *::before, *::after { border-color: hsl(var(--border)); }
+    body { background-color: hsl(var(--background)); color: hsl(var(--foreground)); }
+  </style>
+
+  <!-- Instant dark mode (prevents flash) -->
+  <script>
+    (function () {
+      try {
+        var theme = localStorage.getItem('theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      } catch (e) {}
+    })();
+  </script>
+</head>
+
+<body class="font-sans antialiased">
+  <main class="min-h-screen">
+
+    <!-- ═══════════════ NAVBAR ═══════════════ -->
+    <header class="fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-2xl">
+      <nav class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+        <!-- Logo -->
+        <a href="#" class="flex items-center gap-2.5">
+          <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/25">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-primary-foreground"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          </div>
+          <span class="text-lg font-bold tracking-tight text-foreground">OrchestraAI</span>
+        </a>
+
+        <!-- Desktop nav -->
+        <ul class="hidden items-center gap-8 md:flex">
+          <li><a href="#features" class="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Features</a></li>
+          <li><a href="#pricing" class="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Pricing</a></li>
+          <li><a href="#testimonials" class="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Testimonials</a></li>
+        </ul>
+
+        <!-- Desktop right -->
+        <div class="hidden items-center gap-3 md:flex">
+          <!-- Theme toggle -->
+          <button type="button" onclick="toggleTheme()" id="themeToggleDesktop" class="relative flex h-9 w-9 items-center justify-center rounded-full border border-border/60 bg-secondary text-foreground transition-colors hover:bg-muted" aria-label="Toggle theme">
+            <svg id="sunIconDesktop" class="h-4 w-4 transition-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            <svg id="moonIconDesktop" class="absolute h-4 w-4 transition-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </button>
+          <a href="{{ url_for('login') }}" class="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:shadow-primary/40 hover:brightness-110">Login</a>
+        </div>
+
+        <!-- Mobile right -->
+        <div class="flex items-center gap-2 md:hidden">
+          <button type="button" onclick="toggleTheme()" class="flex h-9 w-9 items-center justify-center rounded-full border border-border/60 bg-secondary text-foreground" aria-label="Toggle theme">
+            <svg id="sunIconMobile" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            <svg id="moonIconMobile" class="absolute h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </button>
+          <button type="button" onclick="toggleMobileMenu()" id="mobileMenuBtn" class="flex h-9 w-9 items-center justify-center rounded-full border border-border/60 bg-secondary text-foreground" aria-label="Open menu">
+            <svg id="menuIcon" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+            <svg id="closeIcon" class="hidden h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </nav>
+
+      <!-- Mobile menu -->
+      <div id="mobileMenu" class="hidden border-t border-border/40 bg-background/95 backdrop-blur-2xl md:hidden">
+        <ul class="flex flex-col gap-1 px-6 py-4">
+          <li><a href="#features" onclick="toggleMobileMenu()" class="block rounded-xl px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">Features</a></li>
+          <li><a href="#pricing" onclick="toggleMobileMenu()" class="block rounded-xl px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">Pricing</a></li>
+          <li><a href="#testimonials" onclick="toggleMobileMenu()" class="block rounded-xl px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">Testimonials</a></li>
+          <li><a href="{{ url_for('login') }}" onclick="toggleMobileMenu()" class="mt-2 block rounded-xl bg-primary px-4 py-2.5 text-center text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/25">Login</a></li>
+        </ul>
+      </div>
+    </header>
+
+    <!-- ═══════════════ HERO ═══════════════ -->
+    <section class="relative overflow-hidden pt-32 pb-20 md:pt-44 md:pb-32">
+      <!-- Background dot pattern -->
+      <div class="pointer-events-none absolute inset-0 opacity-[0.03]" aria-hidden="true" style="background-image:radial-gradient(hsl(var(--foreground)) 1px,transparent 1px);background-size:32px 32px"></div>
+      <!-- Top radial glow -->
+      <div class="pointer-events-none absolute top-0 left-1/2 h-[800px] w-[1200px] -translate-x-1/2 -translate-y-1/3 rounded-full" aria-hidden="true" style="background:radial-gradient(ellipse,hsl(263 70% 58%/0.12),transparent 70%)"></div>
+      <!-- Side glow accents -->
+      <div class="pointer-events-none absolute -left-32 top-1/3 h-[400px] w-[400px] rounded-full opacity-20 blur-3xl" aria-hidden="true" style="background:hsl(290 60% 50%/0.3)"></div>
+      <div class="pointer-events-none absolute -right-32 top-1/4 h-[350px] w-[350px] rounded-full opacity-20 blur-3xl" aria-hidden="true" style="background:hsl(240 70% 60%/0.3)"></div>
+
+      <div class="relative mx-auto max-w-7xl px-6">
+        <!-- Badge -->
+        <div class="mb-8 flex justify-center">
+          <span class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-xs font-semibold text-primary backdrop-blur-sm">
+            <!-- Sparkles icon -->
+            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
+            AI-Powered Project Automation
+          </span>
+        </div>
+
+        <!-- Headline -->
+        <h1 class="mx-auto max-w-4xl text-center text-4xl font-extrabold leading-tight tracking-tight text-balance text-foreground md:text-6xl lg:text-7xl md:leading-[1.08]">
+          Orchestrate Your Workflow
+          <span class="bg-gradient-to-r from-primary via-[hsl(280,65%,55%)] to-[hsl(240,70%,60%)] bg-clip-text text-transparent">
+            with Intelligence
+          </span>
+        </h1>
+
+        <!-- Subtext -->
+        <p class="mx-auto mt-6 max-w-xl text-center text-base leading-relaxed text-muted-foreground md:text-lg">
+          Drop in any PDF project brief and let AI extract tasks, assign teams,
+          and build your roadmap — in seconds, not hours.
+        </p>
+
+        <!-- CTAs -->
+        <div class="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+          <a href="#pricing" class="group inline-flex items-center gap-2 rounded-xl bg-primary px-7 py-3.5 text-sm font-bold text-primary-foreground shadow-xl shadow-primary/30 transition-all hover:shadow-primary/50 hover:brightness-110">
+            Get Started
+            <svg class="h-4 w-4 transition-transform group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+          <a href="#demo" class="inline-flex items-center gap-2 rounded-xl border border-border/60 bg-secondary px-7 py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-muted">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Watch Demo
+          </a>
+        </div>
+
+        <!-- Glassmorphism Card -->
+        <div class="mt-16 md:mt-24">
+          <div class="relative mx-auto w-full max-w-2xl">
+            <!-- Animated glow behind card -->
+            <div class="absolute -inset-6 rounded-3xl opacity-40 blur-3xl" aria-hidden="true" style="background:conic-gradient(from 180deg,hsl(263 70% 58%/0.4),hsl(290 60% 50%/0.2),hsl(240 70% 60%/0.3),hsl(263 70% 58%/0.4))"></div>
+
+            <div class="relative overflow-hidden rounded-2xl border border-primary/20 bg-card/60 shadow-2xl shadow-primary/10 backdrop-blur-2xl">
+              <!-- Top bar -->
+              <div class="flex items-center gap-2 border-b border-border/40 px-5 py-3">
+                <span class="h-3 w-3 rounded-full bg-destructive/70"></span>
+                <span class="h-3 w-3 rounded-full bg-[hsl(45,80%,55%)]/70"></span>
+                <span class="h-3 w-3 rounded-full bg-[hsl(140,60%,45%)]/70"></span>
+                <span class="ml-3 text-xs font-medium text-muted-foreground">OrchestraAI - Task Extraction</span>
+              </div>
+
+              <div class="grid gap-0 md:grid-cols-2">
+                <!-- Left: PDF side -->
+                <div class="border-b border-border/30 p-6 md:border-b-0 md:border-r">
+                  <div class="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    Source Document
+                  </div>
+                  <div class="space-y-3">
+                    <div class="h-2.5 rounded-full bg-border/50" style="width:85%"></div>
+                    <div class="h-2.5 rounded-full bg-border/50" style="width:100%"></div>
+                    <div class="h-2.5 rounded-full bg-border/50" style="width:70%"></div>
+                    <div class="h-2.5 rounded-full bg-border/50" style="width:95%"></div>
+                    <div class="h-2.5 rounded-full bg-border/50" style="width:60%"></div>
+                    <div class="h-2.5 rounded-full bg-border/50" style="width:80%"></div>
+                    <div class="h-2.5 rounded-full bg-border/50" style="width:50%"></div>
+                    <div class="mt-5 inline-flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary">
+                      <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                      project-brief-v3.pdf
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Center sparkle (desktop) -->
+                <div class="absolute left-1/2 top-1/2 z-10 hidden -translate-x-1/2 -translate-y-1/2 md:block" aria-hidden="true">
+                  <div class="flex h-10 w-10 items-center justify-center rounded-full border border-primary/30 bg-background shadow-lg shadow-primary/30">
+                    <svg class="h-4 w-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
+                  </div>
+                </div>
+
+                <!-- Right: Task list side -->
+                <div class="p-6">
+                  <div class="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg>
+                    Generated Tasks
+                  </div>
+                  <ul class="space-y-3">
+                    <!-- Done tasks -->
+                    <li class="flex items-start gap-2.5">
+                      <svg class="mt-0.5 h-4 w-4 shrink-0 text-[hsl(140,60%,45%)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                      <span class="text-sm font-medium leading-snug text-foreground">Define project scope &amp; milestones</span>
+                    </li>
+                    <li class="flex items-start gap-2.5">
+                      <svg class="mt-0.5 h-4 w-4 shrink-0 text-[hsl(140,60%,45%)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                      <span class="text-sm font-medium leading-snug text-foreground">Assign team leads per workstream</span>
+                    </li>
+                    <!-- Pending tasks -->
+                    <li class="flex items-start gap-2.5">
+                      <svg class="mt-0.5 h-4 w-4 shrink-0 text-border" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                      <span class="text-sm leading-snug text-muted-foreground">Set up CI/CD pipeline</span>
+                    </li>
+                    <li class="flex items-start gap-2.5">
+                      <svg class="mt-0.5 h-4 w-4 shrink-0 text-border" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                      <span class="text-sm leading-snug text-muted-foreground">Create design system tokens</span>
+                    </li>
+                    <li class="flex items-start gap-2.5">
+                      <svg class="mt-0.5 h-4 w-4 shrink-0 text-border" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                      <span class="text-sm leading-snug text-muted-foreground">Schedule stakeholder review</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Bottom status bar -->
+              <div class="flex items-center justify-between border-t border-border/40 px-5 py-3">
+                <span class="text-xs text-muted-foreground">5 tasks extracted in 2.3s</span>
+                <span class="flex items-center gap-1.5 text-xs font-semibold text-[hsl(140,60%,45%)]">
+                  <span class="h-2 w-2 rounded-full bg-[hsl(140,60%,45%)]"></span>
+                  AI Complete
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ LOGO CLOUD / STATS ═══════════════ -->
+    <section class="border-y border-border/40 py-16">
+      <div class="mx-auto max-w-7xl px-6">
+        <p class="mb-10 text-center text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          Trusted by innovative teams worldwide
+        </p>
+        <div class="grid grid-cols-2 gap-6 lg:grid-cols-4">
+          <div class="rounded-xl border border-border/40 bg-card/40 p-5 text-center backdrop-blur-sm">
+            <p class="text-2xl font-extrabold text-foreground">20 days</p>
+            <p class="mt-1 text-sm text-muted-foreground">saved on daily builds</p>
+            <p class="mt-3 text-xs font-bold uppercase tracking-widest text-muted-foreground/60">Netflix</p>
+          </div>
+          <div class="rounded-xl border border-border/40 bg-card/40 p-5 text-center backdrop-blur-sm">
+            <p class="text-2xl font-extrabold text-foreground">98%</p>
+            <p class="mt-1 text-sm text-muted-foreground">faster time to market</p>
+            <p class="mt-3 text-xs font-bold uppercase tracking-widest text-muted-foreground/60">Tripadvisor</p>
+          </div>
+          <div class="rounded-xl border border-border/40 bg-card/40 p-5 text-center backdrop-blur-sm">
+            <p class="text-2xl font-extrabold text-foreground">300%</p>
+            <p class="mt-1 text-sm text-muted-foreground">increase in SEO</p>
+            <p class="mt-3 text-xs font-bold uppercase tracking-widest text-muted-foreground/60">Box</p>
+          </div>
+          <div class="rounded-xl border border-border/40 bg-card/40 p-5 text-center backdrop-blur-sm">
+            <p class="text-2xl font-extrabold text-foreground">6x</p>
+            <p class="mt-1 text-sm text-muted-foreground">faster to build + deploy</p>
+            <p class="mt-3 text-xs font-bold uppercase tracking-widest text-muted-foreground/60">eBay</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ FEATURES ═══════════════ -->
+    <section id="features" class="py-24 md:py-32">
+      <div class="mx-auto max-w-7xl px-6">
+        <!-- Section header -->
+        <div class="mx-auto max-w-2xl text-center">
+          <p class="text-sm font-bold uppercase tracking-widest text-primary">Features</p>
+          <h2 class="mt-3 text-3xl font-extrabold tracking-tight text-balance text-foreground md:text-5xl">Everything you need to automate project management</h2>
+          <p class="mt-4 text-base leading-relaxed text-muted-foreground md:text-lg">From document analysis to team coordination, OrchestraAI handles the operational heavy lifting so you can focus on building.</p>
+        </div>
+
+        <!-- Grid -->
+        <div class="mt-16 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <!-- Feature 1: PDF Intelligence -->
+          <div class="group relative overflow-hidden rounded-2xl border border-border/40 bg-card/40 p-7 backdrop-blur-sm transition-all hover:border-primary/30 hover:bg-card/70 hover:shadow-lg hover:shadow-primary/5">
+            <div class="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full opacity-0 blur-2xl transition-opacity group-hover:opacity-30" aria-hidden="true" style="background:hsl(263 70% 58%)"></div>
+            <div class="relative">
+              <div class="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20">
+                <svg class="h-5 w-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+              </div>
+              <h3 class="mb-2 text-lg font-bold text-foreground">PDF Intelligence</h3>
+              <p class="text-sm leading-relaxed text-muted-foreground">Upload any project brief, SOW, or requirements doc. Our AI parses every page and extracts actionable tasks automatically.</p>
+            </div>
+          </div>
+          <!-- Feature 2: Instant Task Generation -->
+          <div class="group relative overflow-hidden rounded-2xl border border-border/40 bg-card/40 p-7 backdrop-blur-sm transition-all hover:border-primary/30 hover:bg-card/70 hover:shadow-lg hover:shadow-primary/5">
+            <div class="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full opacity-0 blur-2xl transition-opacity group-hover:opacity-30" aria-hidden="true" style="background:hsl(263 70% 58%)"></div>
+            <div class="relative">
+              <div class="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20">
+                <svg class="h-5 w-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              </div>
+              <h3 class="mb-2 text-lg font-bold text-foreground">Instant Task Generation</h3>
+              <p class="text-sm leading-relaxed text-muted-foreground">Receive a structured task list with priorities, deadlines, and dependencies generated in seconds — not hours of manual work.</p>
+            </div>
+          </div>
+          <!-- Feature 3: Smart Team Assignment -->
+          <div class="group relative overflow-hidden rounded-2xl border border-border/40 bg-card/40 p-7 backdrop-blur-sm transition-all hover:border-primary/30 hover:bg-card/70 hover:shadow-lg hover:shadow-primary/5">
+            <div class="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full opacity-0 blur-2xl transition-opacity group-hover:opacity-30" aria-hidden="true" style="background:hsl(263 70% 58%)"></div>
+            <div class="relative">
+              <div class="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20">
+                <svg class="h-5 w-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <h3 class="mb-2 text-lg font-bold text-foreground">Smart Team Assignment</h3>
+              <p class="text-sm leading-relaxed text-muted-foreground">AI matches tasks to team members based on skill sets, workload, and availability for balanced resource allocation.</p>
+            </div>
+          </div>
+          <!-- Feature 4: Real-time Dashboards -->
+          <div class="group relative overflow-hidden rounded-2xl border border-border/40 bg-card/40 p-7 backdrop-blur-sm transition-all hover:border-primary/30 hover:bg-card/70 hover:shadow-lg hover:shadow-primary/5">
+            <div class="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full opacity-0 blur-2xl transition-opacity group-hover:opacity-30" aria-hidden="true" style="background:hsl(263 70% 58%)"></div>
+            <div class="relative">
+              <div class="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20">
+                <svg class="h-5 w-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              </div>
+              <h3 class="mb-2 text-lg font-bold text-foreground">Real-time Dashboards</h3>
+              <p class="text-sm leading-relaxed text-muted-foreground">Track progress with live metrics. Monitor velocity, blockers, and milestones across every project in one view.</p>
+            </div>
+          </div>
+          <!-- Feature 5: Enterprise Security -->
+          <div class="group relative overflow-hidden rounded-2xl border border-border/40 bg-card/40 p-7 backdrop-blur-sm transition-all hover:border-primary/30 hover:bg-card/70 hover:shadow-lg hover:shadow-primary/5">
+            <div class="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full opacity-0 blur-2xl transition-opacity group-hover:opacity-30" aria-hidden="true" style="background:hsl(263 70% 58%)"></div>
+            <div class="relative">
+              <div class="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20">
+                <svg class="h-5 w-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </div>
+              <h3 class="mb-2 text-lg font-bold text-foreground">Enterprise Security</h3>
+              <p class="text-sm leading-relaxed text-muted-foreground">SOC 2 Type II compliant with end-to-end encryption. Your documents and data never leave your secure environment.</p>
+            </div>
+          </div>
+          <!-- Feature 6: Continuous Sync -->
+          <div class="group relative overflow-hidden rounded-2xl border border-border/40 bg-card/40 p-7 backdrop-blur-sm transition-all hover:border-primary/30 hover:bg-card/70 hover:shadow-lg hover:shadow-primary/5">
+            <div class="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full opacity-0 blur-2xl transition-opacity group-hover:opacity-30" aria-hidden="true" style="background:hsl(263 70% 58%)"></div>
+            <div class="relative">
+              <div class="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/20">
+                <svg class="h-5 w-5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              </div>
+              <h3 class="mb-2 text-lg font-bold text-foreground">Continuous Sync</h3>
+              <p class="text-sm leading-relaxed text-muted-foreground">Integrates with Jira, Linear, Asana, and Notion. Changes sync bi-directionally so your tools stay in harmony.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ TESTIMONIALS ═══════════════ -->
+    <section id="testimonials" class="border-t border-border/40 py-24 md:py-32">
+      <div class="mx-auto max-w-7xl px-6">
+        <div class="mx-auto max-w-2xl text-center">
+          <p class="text-sm font-bold uppercase tracking-widest text-primary">Testimonials</p>
+          <h2 class="mt-3 text-3xl font-extrabold tracking-tight text-balance text-foreground md:text-5xl">Loved by product teams everywhere</h2>
+        </div>
+
+        <div class="mt-16 grid gap-6 md:grid-cols-3">
+          <!-- Testimonial 1 -->
+          <div class="group flex flex-col justify-between rounded-2xl border border-border/40 bg-card/40 p-7 backdrop-blur-sm transition-all hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5">
+            <div class="mb-4 flex gap-1">
+              <svg class="h-4 w-4 fill-primary/80 text-primary/80" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg class="h-4 w-4 fill-primary/80 text-primary/80" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg class="h-4 w-4 fill-primary/80 text-primary/80" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg class="h-4 w-4 fill-primary/80 text-primary/80" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg class="h-4 w-4 fill-primary/80 text-primary/80" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <blockquote class="flex-1 text-sm leading-relaxed text-muted-foreground">"OrchestraAI turned a 40-page SOW into a fully structured project plan in under a minute. It used to take our PMs an entire day."</blockquote>
+            <div class="mt-6 flex items-center gap-3 border-t border-border/30 pt-5">
+              <div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary ring-1 ring-primary/20">SC</div>
+              <div>
+                <p class="text-sm font-bold text-foreground">Sarah Chen</p>
+                <p class="text-xs text-muted-foreground">VP of Engineering, Globex</p>
+              </div>
+            </div>
+          </div>
+          <!-- Testimonial 2 -->
+          <div class="group flex flex-col justify-between rounded-2xl border border-border/40 bg-card/40 p-7 backdrop-blur-sm transition-all hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5">
+            <div class="mb-4 flex gap-1">
+              <svg class="h-4 w-4 fill-primary/80 text-primary/80" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg class="h-4 w-4 fill-primary/80 text-primary/80" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg class="h-4 w-4 fill-primary/80 text-primary/80" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg class="h-4 w-4 fill-primary/80 text-primary/80" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg class="h-4 w-4 fill-primary/80 text-primary/80" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <blockquote class="flex-1 text-sm leading-relaxed text-muted-foreground">"The AI task assignment is eerily accurate. It understands our team's strengths and balances workload better than any tool we've tried."</blockquote>
+            <div class="mt-6 flex items-center gap-3 border-t border-border/30 pt-5">
+              <div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary ring-1 ring-primary/20">MR</div>
+              <div>
+                <p class="text-sm font-bold text-foreground">Marcus Rivera</p>
+                <p class="text-xs text-muted-foreground">CTO, Initech</p>
+              </div>
+            </div>
+          </div>
+          <!-- Testimonial 3 -->
+          <div class="group flex flex-col justify-between rounded-2xl border border-border/40 bg-card/40 p-7 backdrop-blur-sm transition-all hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5">
+            <div class="mb-4 flex gap-1">
+              <svg class="h-4 w-4 fill-primary/80 text-primary/80" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg class="h-4 w-4 fill-primary/80 text-primary/80" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg class="h-4 w-4 fill-primary/80 text-primary/80" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg class="h-4 w-4 fill-primary/80 text-primary/80" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <svg class="h-4 w-4 fill-primary/80 text-primary/80" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <blockquote class="flex-1 text-sm leading-relaxed text-muted-foreground">"We reduced project kickoff time by 80%. Upload a brief, review the plan, and start sprinting — it's that simple."</blockquote>
+            <div class="mt-6 flex items-center gap-3 border-t border-border/30 pt-5">
+              <div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary ring-1 ring-primary/20">AP</div>
+              <div>
+                <p class="text-sm font-bold text-foreground">Anika Patel</p>
+                <p class="text-xs text-muted-foreground">Head of Product, Massive Dynamic</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ PRICING ═══════════════ -->
+    <section id="pricing" class="border-t border-border/40 py-24 md:py-32">
+      <div class="mx-auto max-w-7xl px-6">
+        <div class="mx-auto max-w-2xl text-center">
+          <p class="text-sm font-bold uppercase tracking-widest text-primary">Pricing</p>
+          <h2 class="mt-3 text-3xl font-extrabold tracking-tight text-balance text-foreground md:text-5xl">Simple, transparent pricing</h2>
+          <p class="mt-4 text-base leading-relaxed text-muted-foreground md:text-lg">Start free, scale when you are ready. No hidden fees.</p>
+        </div>
+
+        <div class="mx-auto mt-16 grid max-w-5xl gap-6 lg:grid-cols-3">
+          <!-- Starter -->
+          <div class="relative flex flex-col rounded-2xl border border-border/40 bg-card/40 p-7 backdrop-blur-sm transition-all hover:border-primary/20">
+            <div class="mb-6">
+              <h3 class="text-lg font-bold text-foreground">Starter</h3>
+              <p class="mt-1 text-sm text-muted-foreground">For individuals exploring AI-powered project management.</p>
+            </div>
+            <div class="mb-6">
+              <span class="text-5xl font-extrabold tracking-tight text-foreground">$0</span>
+              <span class="ml-2 text-sm text-muted-foreground">forever</span>
+            </div>
+            <ul class="mb-8 flex-1 space-y-3">
+              <li class="flex items-start gap-2.5"><div class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10"><svg class="h-3 w-3 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span class="text-sm text-muted-foreground">5 PDF analyses per month</span></li>
+              <li class="flex items-start gap-2.5"><div class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10"><svg class="h-3 w-3 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span class="text-sm text-muted-foreground">Basic task generation</span></li>
+              <li class="flex items-start gap-2.5"><div class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10"><svg class="h-3 w-3 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span class="text-sm text-muted-foreground">1 active project</span></li>
+              <li class="flex items-start gap-2.5"><div class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10"><svg class="h-3 w-3 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span class="text-sm text-muted-foreground">Community support</span></li>
+            </ul>
+            <a href="#" class="block rounded-xl border border-border/60 bg-secondary py-3 text-center text-sm font-bold text-foreground transition-all hover:bg-muted">Get Started Free</a>
+          </div>
+
+          <!-- Pro (highlighted) -->
+          <div class="relative flex flex-col rounded-2xl border border-primary/40 bg-primary/[0.04] p-7 shadow-xl shadow-primary/10 ring-1 ring-primary/20 backdrop-blur-sm transition-all scale-[1.02]">
+            <span class="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-primary px-4 py-1 text-xs font-bold text-primary-foreground shadow-lg shadow-primary/30">Most Popular</span>
+            <div class="mb-6">
+              <h3 class="text-lg font-bold text-foreground">Pro</h3>
+              <p class="mt-1 text-sm text-muted-foreground">For growing teams that need full automation power.</p>
+            </div>
+            <div class="mb-6">
+              <span class="text-5xl font-extrabold tracking-tight text-foreground">$29</span>
+              <span class="ml-2 text-sm text-muted-foreground">per user / month</span>
+            </div>
+            <ul class="mb-8 flex-1 space-y-3">
+              <li class="flex items-start gap-2.5"><div class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10"><svg class="h-3 w-3 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span class="text-sm text-muted-foreground">Unlimited PDF analyses</span></li>
+              <li class="flex items-start gap-2.5"><div class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10"><svg class="h-3 w-3 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span class="text-sm text-muted-foreground">AI team assignment</span></li>
+              <li class="flex items-start gap-2.5"><div class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10"><svg class="h-3 w-3 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span class="text-sm text-muted-foreground">Unlimited projects</span></li>
+              <li class="flex items-start gap-2.5"><div class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10"><svg class="h-3 w-3 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span class="text-sm text-muted-foreground">Jira &amp; Linear sync</span></li>
+              <li class="flex items-start gap-2.5"><div class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10"><svg class="h-3 w-3 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span class="text-sm text-muted-foreground">Priority support</span></li>
+              <li class="flex items-start gap-2.5"><div class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10"><svg class="h-3 w-3 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span class="text-sm text-muted-foreground">Custom dashboards</span></li>
+            </ul>
+            <a href="#" class="block rounded-xl bg-primary py-3 text-center text-sm font-bold text-primary-foreground shadow-lg shadow-primary/30 transition-all hover:shadow-primary/50 hover:brightness-110">Start Free Trial</a>
+          </div>
+
+          <!-- Enterprise -->
+          <div class="relative flex flex-col rounded-2xl border border-border/40 bg-card/40 p-7 backdrop-blur-sm transition-all hover:border-primary/20">
+            <div class="mb-6">
+              <h3 class="text-lg font-bold text-foreground">Enterprise</h3>
+              <p class="mt-1 text-sm text-muted-foreground">For organizations with advanced security and scale needs.</p>
+            </div>
+            <div class="mb-6">
+              <span class="text-5xl font-extrabold tracking-tight text-foreground">Custom</span>
+              <span class="ml-2 text-sm text-muted-foreground">tailored pricing</span>
+            </div>
+            <ul class="mb-8 flex-1 space-y-3">
+              <li class="flex items-start gap-2.5"><div class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10"><svg class="h-3 w-3 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span class="text-sm text-muted-foreground">Everything in Pro</span></li>
+              <li class="flex items-start gap-2.5"><div class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10"><svg class="h-3 w-3 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span class="text-sm text-muted-foreground">SSO &amp; SAML auth</span></li>
+              <li class="flex items-start gap-2.5"><div class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10"><svg class="h-3 w-3 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span class="text-sm text-muted-foreground">Dedicated success manager</span></li>
+              <li class="flex items-start gap-2.5"><div class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10"><svg class="h-3 w-3 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span class="text-sm text-muted-foreground">SLA guarantees</span></li>
+              <li class="flex items-start gap-2.5"><div class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10"><svg class="h-3 w-3 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span class="text-sm text-muted-foreground">On-premise deployment</span></li>
+              <li class="flex items-start gap-2.5"><div class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10"><svg class="h-3 w-3 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span class="text-sm text-muted-foreground">Audit logging</span></li>
+            </ul>
+            <a href="#" class="block rounded-xl border border-border/60 bg-secondary py-3 text-center text-sm font-bold text-foreground transition-all hover:bg-muted">Contact Sales</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ CTA SECTION ═══════════════ -->
+    <section class="py-24 md:py-32">
+      <div class="mx-auto max-w-7xl px-6">
+        <div class="relative overflow-hidden rounded-3xl border border-primary/20 bg-card/50 px-6 py-20 text-center backdrop-blur-2xl md:px-16">
+          <!-- Glow effects -->
+          <div class="pointer-events-none absolute inset-0" aria-hidden="true" style="background:radial-gradient(ellipse at center,hsl(263 70% 58%/0.08),transparent 70%)"></div>
+          <div class="pointer-events-none absolute -left-20 -top-20 h-64 w-64 rounded-full opacity-20 blur-3xl" aria-hidden="true" style="background:hsl(263 70% 58%/0.4)"></div>
+          <div class="pointer-events-none absolute -bottom-20 -right-20 h-64 w-64 rounded-full opacity-20 blur-3xl" aria-hidden="true" style="background:hsl(240 70% 60%/0.4)"></div>
+
+          <div class="relative">
+            <h2 class="mx-auto max-w-xl text-3xl font-extrabold tracking-tight text-balance text-foreground md:text-5xl">Ready to orchestrate smarter?</h2>
+            <p class="mx-auto mt-5 max-w-md text-base leading-relaxed text-muted-foreground md:text-lg">Join thousands of teams automating their project workflows with AI. Get started in under 60 seconds.</p>
+            <div class="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+              <a href="#pricing" class="group inline-flex items-center gap-2 rounded-xl bg-primary px-7 py-3.5 text-sm font-bold text-primary-foreground shadow-xl shadow-primary/30 transition-all hover:shadow-primary/50 hover:brightness-110">
+                Get Started Free
+                <svg class="h-4 w-4 transition-transform group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </a>
+              <a href="#demo" class="inline-flex items-center gap-2 rounded-xl border border-border/60 bg-secondary px-7 py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-muted">Talk to Sales</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════ FOOTER ═══════════════ -->
+    <footer class="border-t border-border/40 py-14">
+      <div class="mx-auto max-w-7xl px-6">
+        <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
+          <!-- Brand -->
+          <div class="lg:col-span-1">
+            <a href="#" class="flex items-center gap-2.5">
+              <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/25">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-primary-foreground"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+              </div>
+              <span class="text-sm font-bold text-foreground">OrchestraAI</span>
+            </a>
+            <p class="mt-4 text-xs leading-relaxed text-muted-foreground">AI-powered project management automation for modern teams.</p>
+          </div>
+
+          <!-- Product -->
+          <div>
+            <h4 class="mb-4 text-xs font-bold uppercase tracking-widest text-foreground">Product</h4>
+            <ul class="space-y-2.5">
+              <li><a href="#features" class="text-xs text-muted-foreground transition-colors hover:text-primary">Features</a></li>
+              <li><a href="#pricing" class="text-xs text-muted-foreground transition-colors hover:text-primary">Pricing</a></li>
+              <li><a href="#" class="text-xs text-muted-foreground transition-colors hover:text-primary">Integrations</a></li>
+              <li><a href="#" class="text-xs text-muted-foreground transition-colors hover:text-primary">Changelog</a></li>
+            </ul>
+          </div>
+          <!-- Company -->
+          <div>
+            <h4 class="mb-4 text-xs font-bold uppercase tracking-widest text-foreground">Company</h4>
+            <ul class="space-y-2.5">
+              <li><a href="#" class="text-xs text-muted-foreground transition-colors hover:text-primary">About</a></li>
+              <li><a href="#" class="text-xs text-muted-foreground transition-colors hover:text-primary">Blog</a></li>
+              <li><a href="#" class="text-xs text-muted-foreground transition-colors hover:text-primary">Careers</a></li>
+              <li><a href="#" class="text-xs text-muted-foreground transition-colors hover:text-primary">Contact</a></li>
+            </ul>
+          </div>
+          <!-- Resources -->
+          <div>
+            <h4 class="mb-4 text-xs font-bold uppercase tracking-widest text-foreground">Resources</h4>
+            <ul class="space-y-2.5">
+              <li><a href="#" class="text-xs text-muted-foreground transition-colors hover:text-primary">Documentation</a></li>
+              <li><a href="#" class="text-xs text-muted-foreground transition-colors hover:text-primary">API Reference</a></li>
+              <li><a href="#" class="text-xs text-muted-foreground transition-colors hover:text-primary">Status</a></li>
+              <li><a href="#" class="text-xs text-muted-foreground transition-colors hover:text-primary">Community</a></li>
+            </ul>
+          </div>
+          <!-- Legal -->
+          <div>
+            <h4 class="mb-4 text-xs font-bold uppercase tracking-widest text-foreground">Legal</h4>
+            <ul class="space-y-2.5">
+              <li><a href="#" class="text-xs text-muted-foreground transition-colors hover:text-primary">Privacy</a></li>
+              <li><a href="#" class="text-xs text-muted-foreground transition-colors hover:text-primary">Terms</a></li>
+              <li><a href="#" class="text-xs text-muted-foreground transition-colors hover:text-primary">Security</a></li>
+              <li><a href="#" class="text-xs text-muted-foreground transition-colors hover:text-primary">DPA</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="mt-12 border-t border-border/40 pt-6">
+          <p class="text-center text-xs text-muted-foreground" id="copyright"></p>
+        </div>
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- ═══════════════ JAVASCRIPT ═══════════════ -->
+  <script>
+    // Copyright year
+    document.getElementById('copyright').textContent = '\u00A9 ' + new Date().getFullYear() + ' OrchestraAI. All rights reserved.';
+
+    // ---- Theme Toggle ----
+    function updateThemeIcons() {
+      var isDark = document.documentElement.classList.contains('dark');
+      var sunD = document.getElementById('sunIconDesktop');
+      var moonD = document.getElementById('moonIconDesktop');
+      var sunM = document.getElementById('sunIconMobile');
+      var moonM = document.getElementById('moonIconMobile');
+
+      if (isDark) {
+        sunD.style.display = 'none'; moonD.style.display = 'block'; moonD.style.position = 'relative';
+        sunM.style.display = 'none'; moonM.style.display = 'block'; moonM.style.position = 'relative';
+      } else {
+        sunD.style.display = 'block'; sunD.style.position = 'relative'; moonD.style.display = 'none';
+        sunM.style.display = 'block'; sunM.style.position = 'relative'; moonM.style.display = 'none';
+      }
+    }
+    updateThemeIcons();
+
+    function toggleTheme() {
+      var isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      updateThemeIcons();
+    }
+
+    // ---- Mobile Menu ----
+    function toggleMobileMenu() {
+      var menu = document.getElementById('mobileMenu');
+      var menuIcon = document.getElementById('menuIcon');
+      var closeIcon = document.getElementById('closeIcon');
+      var isHidden = menu.classList.contains('hidden');
+      menu.classList.toggle('hidden');
+      menuIcon.classList.toggle('hidden', !isHidden);
+      closeIcon.classList.toggle('hidden', isHidden);
+    }
+  </script>
+</body>
+</html>
