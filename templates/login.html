@@ -1,99 +1,283 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Page</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            font-family: Arial, sans-serif;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0e0618" />
+  <title>Login - OrchestrAi</title>
+
+  <!-- Google Font: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          borderRadius: { lg: 'var(--radius)', md: 'calc(var(--radius) - 2px)', sm: 'calc(var(--radius) - 4px)' },
+          colors: {
+            background: 'hsl(var(--background))',
+            foreground: 'hsl(var(--foreground))',
+            card: { DEFAULT: 'hsl(var(--card))', foreground: 'hsl(var(--card-foreground))' },
+            popover: { DEFAULT: 'hsl(var(--popover))', foreground: 'hsl(var(--popover-foreground))' },
+            primary: { DEFAULT: 'hsl(var(--primary))', foreground: 'hsl(var(--primary-foreground))' },
+            secondary: { DEFAULT: 'hsl(var(--secondary))', foreground: 'hsl(var(--secondary-foreground))' },
+            muted: { DEFAULT: 'hsl(var(--muted))', foreground: 'hsl(var(--muted-foreground))' },
+            accent: { DEFAULT: 'hsl(var(--accent))', foreground: 'hsl(var(--accent-foreground))' },
+            destructive: { DEFAULT: 'hsl(var(--destructive))', foreground: 'hsl(var(--destructive-foreground))' },
+            border: 'hsl(var(--border))',
+            input: 'hsl(var(--input))',
+            ring: 'hsl(var(--ring))',
+          },
+        },
+      },
+    }
+  </script>
+
+  <style>
+    :root {
+      --background: 270 20% 98%;
+      --foreground: 270 50% 8%;
+      --card: 270 25% 96%;
+      --card-foreground: 270 50% 8%;
+      --popover: 270 25% 96%;
+      --popover-foreground: 270 50% 8%;
+      --primary: 263 70% 50%;
+      --primary-foreground: 0 0% 100%;
+      --secondary: 270 20% 92%;
+      --secondary-foreground: 270 40% 15%;
+      --muted: 270 15% 93%;
+      --muted-foreground: 270 10% 42%;
+      --accent: 263 70% 50%;
+      --accent-foreground: 0 0% 100%;
+      --destructive: 0 84% 60%;
+      --destructive-foreground: 0 0% 98%;
+      --border: 270 15% 88%;
+      --input: 270 15% 88%;
+      --ring: 263 70% 50%;
+      --radius: 0.75rem;
+    }
+    .dark {
+      --background: 270 40% 4%;
+      --foreground: 270 10% 93%;
+      --card: 270 35% 8%;
+      --card-foreground: 270 10% 93%;
+      --popover: 270 35% 8%;
+      --popover-foreground: 270 10% 93%;
+      --primary: 263 70% 58%;
+      --primary-foreground: 0 0% 100%;
+      --secondary: 270 30% 12%;
+      --secondary-foreground: 270 10% 93%;
+      --muted: 270 25% 14%;
+      --muted-foreground: 270 10% 50%;
+      --accent: 263 70% 58%;
+      --accent-foreground: 0 0% 100%;
+      --destructive: 0 62% 30%;
+      --destructive-foreground: 0 0% 98%;
+      --border: 270 25% 16%;
+      --input: 270 25% 16%;
+      --ring: 263 70% 58%;
+    }
+    *, *::before, *::after { border-color: hsl(var(--border)); }
+    body { background-color: hsl(var(--background)); color: hsl(var(--foreground)); }
+
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus {
+      -webkit-text-fill-color: hsl(var(--foreground));
+      -webkit-box-shadow: 0 0 0px 1000px hsl(var(--secondary)) inset;
+      transition: background-color 5000s ease-in-out 0s;
+    }
+  </style>
+
+  <script>
+    (function () {
+      try {
+        var theme = localStorage.getItem('theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
         }
-        .login-container {
-            background: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-            width: 300px;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-            margin: 0 0 30px 0;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: bold;
-        }
-        input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            box-sizing: border-box;
-            font-size: 14px;
-        }
-        input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        button {
-            width: 100%;
-            padding: 12px;
-            background-color: #667eea;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        button:hover {
-            background-color: #764ba2;
-        }
-        .back-link {
-            text-align: center;
-            margin-top: 15px;
-        }
-        .back-link a {
-            color: #667eea;
-            text-decoration: none;
-            font-size: 14px;
-        }
-        .back-link a:hover {
-            text-decoration: underline;
-        }
-    </style>
+      } catch (e) {}
+    })();
+  </script>
 </head>
-<body>
-    <div class="login-container">
-        <h1>Login</h1>
-        <form>
-            <div class="form-group">
-                <label for="email">Email:</label>
-                <input type="email" id="email" name="email" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Password:</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-            <button type="submit">Login</button>
-        </form>
-        <div class="back-link">
-            <a href="/">Back to Home</a>
-        </div>
+
+<body class="font-sans antialiased">
+  <div class="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-12">
+
+    <!-- Background effects -->
+    <div class="pointer-events-none absolute inset-0 opacity-[0.03]" aria-hidden="true" style="background-image:radial-gradient(hsl(var(--foreground)) 1px,transparent 1px);background-size:32px 32px"></div>
+    <div class="pointer-events-none absolute top-0 left-1/2 h-[800px] w-[1200px] -translate-x-1/2 -translate-y-1/3 rounded-full" aria-hidden="true" style="background:radial-gradient(ellipse,hsl(263 70% 58%/0.12),transparent 70%)"></div>
+    <div class="pointer-events-none absolute -left-32 top-1/3 h-[400px] w-[400px] rounded-full opacity-20 blur-3xl" aria-hidden="true" style="background:hsl(290 60% 50%/0.3)"></div>
+    <div class="pointer-events-none absolute -right-32 bottom-1/4 h-[350px] w-[350px] rounded-full opacity-20 blur-3xl" aria-hidden="true" style="background:hsl(240 70% 60%/0.3)"></div>
+
+    <!-- Back to home (top-left) -->
+    <a href="{{ url_for('main.home') }}" class="absolute top-6 left-6 inline-flex items-center gap-2 rounded-full border border-border/60 bg-secondary/50 px-4 py-2 text-sm font-medium text-muted-foreground backdrop-blur-sm transition-colors hover:bg-muted hover:text-foreground">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      Home
+    </a>
+
+    <!-- Theme toggle (top-right) -->
+    <div class="absolute top-6 right-6">
+      <button type="button" onclick="toggleTheme()" class="relative flex h-9 w-9 items-center justify-center rounded-full border border-border/60 bg-secondary text-foreground transition-colors hover:bg-muted" aria-label="Toggle theme">
+        <svg id="sunIcon" class="h-4 w-4 transition-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg id="moonIcon" class="absolute h-4 w-4 transition-all" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
     </div>
+
+    <!-- Login card -->
+    <div class="relative w-full max-w-md">
+      <!-- Glow behind card -->
+      <div class="absolute -inset-4 rounded-3xl opacity-30 blur-3xl" aria-hidden="true" style="background:conic-gradient(from 180deg,hsl(263 70% 58%/0.4),hsl(290 60% 50%/0.2),hsl(240 70% 60%/0.3),hsl(263 70% 58%/0.4))"></div>
+
+      <div class="relative overflow-hidden rounded-2xl border border-primary/20 bg-card/60 p-8 shadow-2xl shadow-primary/10 backdrop-blur-2xl sm:p-10">
+
+        <!-- Logo + heading -->
+        <div class="mb-8 text-center">
+          <a href="{{ url_for('main.home') }}" class="mb-6 inline-flex items-center gap-2.5">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/25">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-primary-foreground"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            </div>
+            <span class="text-xl font-bold tracking-tight text-foreground">OrchestrAi</span>
+          </a>
+          <h1 class="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">Welcome back</h1>
+          <p class="mt-2 text-sm text-muted-foreground">Sign in to your account to continue</p>
+        </div>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="mb-4 rounded-xl border px-4 py-3 text-sm
+                {% if category == 'error' %} border-destructive/30 bg-destructive/10 text-destructive
+                {% elif category == 'success' %} border-[hsl(140,60%,45%)]/30 bg-[hsl(140,60%,45%)]/10 text-[hsl(140,60%,45%)]
+                {% else %} border-primary/30 bg-primary/10 text-primary {% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- Login form -->
+        <form method="POST" action="{{ url_for('auth.login') }}" class="space-y-5">
+          <!-- Username -->
+          <div>
+            <label for="username" class="mb-1.5 block text-sm font-semibold text-foreground">Username</label>
+            <div class="relative">
+              <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
+                <svg class="h-4 w-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
+              <input type="text" id="username" name="username" required autocomplete="username" placeholder="Enter your username"
+                class="w-full rounded-xl border border-border/60 bg-secondary/50 py-3 pl-10 pr-4 text-sm text-foreground placeholder-muted-foreground outline-none transition-all focus:border-primary/50 focus:ring-2 focus:ring-primary/20" />
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div>
+            <div class="mb-1.5 flex items-center justify-between">
+              <label for="password" class="text-sm font-semibold text-foreground">Password</label>
+              <a href="#" class="text-xs font-medium text-primary transition-colors hover:text-primary/80">Forgot password?</a>
+            </div>
+            <div class="relative">
+              <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
+                <svg class="h-4 w-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </div>
+              <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="••••••••"
+                class="w-full rounded-xl border border-border/60 bg-secondary/50 py-3 pl-10 pr-12 text-sm text-foreground placeholder-muted-foreground outline-none transition-all focus:border-primary/50 focus:ring-2 focus:ring-primary/20" />
+              <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-muted-foreground transition-colors hover:text-foreground" aria-label="Show password">
+                <svg id="eyeOff" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/></svg>
+                <svg id="eyeOn" class="hidden h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Role selector -->
+          <div>
+            <label class="mb-1.5 block text-sm font-semibold text-foreground">Sign in as</label>
+            <div class="grid grid-cols-2 gap-3">
+              <label for="role-manager" class="relative cursor-pointer">
+                <input type="radio" id="role-manager" name="role" value="manager" class="peer sr-only" required />
+                <div class="flex items-center gap-2.5 rounded-xl border border-border/60 bg-secondary/50 px-4 py-3 text-sm font-medium text-muted-foreground transition-all peer-checked:border-primary/50 peer-checked:bg-primary/10 peer-checked:text-primary peer-checked:ring-2 peer-checked:ring-primary/20">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  Manager
+                </div>
+              </label>
+              <label for="role-employee" class="relative cursor-pointer">
+                <input type="radio" id="role-employee" name="role" value="employee" class="peer sr-only" required />
+                <div class="flex items-center gap-2.5 rounded-xl border border-border/60 bg-secondary/50 px-4 py-3 text-sm font-medium text-muted-foreground transition-all peer-checked:border-primary/50 peer-checked:bg-primary/10 peer-checked:text-primary peer-checked:ring-2 peer-checked:ring-primary/20">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                  Employee
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Remember me -->
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="remember" name="remember"
+              class="h-4 w-4 rounded border-border/60 bg-secondary/50 text-primary accent-primary focus:ring-primary/20" />
+            <label for="remember" class="text-sm text-muted-foreground">Remember me</label>
+          </div>
+
+          <!-- Submit -->
+          <button type="submit"
+            class="group w-full rounded-xl bg-primary py-3 text-center text-sm font-bold text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:shadow-primary/40 hover:brightness-110">
+            Sign In
+            <svg class="inline-block ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+        </form>
+
+        <!-- Info note -->
+        <p class="mt-6 text-center text-xs text-muted-foreground">
+          Employees are added by their Project Manager.<br/>
+          Contact your manager if you don't have an account.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Theme toggle
+    function updateThemeIcons() {
+      var isDark = document.documentElement.classList.contains('dark');
+      var sun = document.getElementById('sunIcon');
+      var moon = document.getElementById('moonIcon');
+      if (isDark) {
+        sun.style.display = 'none'; moon.style.display = 'block'; moon.style.position = 'relative';
+      } else {
+        sun.style.display = 'block'; sun.style.position = 'relative'; moon.style.display = 'none';
+      }
+    }
+    updateThemeIcons();
+
+    function toggleTheme() {
+      var isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      updateThemeIcons();
+    }
+
+    // Password visibility toggle
+    function togglePassword() {
+      var input = document.getElementById('password');
+      var eyeOff = document.getElementById('eyeOff');
+      var eyeOn = document.getElementById('eyeOn');
+      if (input.type === 'password') {
+        input.type = 'text';
+        eyeOff.classList.add('hidden');
+        eyeOn.classList.remove('hidden');
+      } else {
+        input.type = 'password';
+        eyeOff.classList.remove('hidden');
+        eyeOn.classList.add('hidden');
+      }
+    }
+  </script>
 </body>
 </html>

@@ -3,14 +3,13 @@ import os
 class Config:
     """Base configuration"""
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SECRET_KEY = os.getenv('SECRET_KEY', 'orchestrai-dev-secret-key-change-in-production')
 
 class DevelopmentConfig(Config):
     """Development configuration"""
-    # PostgreSQL connection string
-    # Format: postgresql://username:password@localhost:5432/database_name
     SQLALCHEMY_DATABASE_URI = os.getenv(
         'DATABASE_URL',
-        'postgresql://username:password@localhost:5432/flaskapp_db'
+        'postgresql://postgres:sara123@localhost:5432/orchestraai_db'
     )
     DEBUG = True
 
