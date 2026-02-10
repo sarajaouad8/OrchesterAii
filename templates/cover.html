@@ -114,6 +114,22 @@
 </head>
 
 <body class="font-sans antialiased">
+  <!-- Flash messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="fixed top-20 left-1/2 -translate-x-1/2 z-[100] w-full max-w-md px-4">
+        {% for category, message in messages %}
+          <div class="mb-2 rounded-xl border px-4 py-3 text-sm shadow-lg backdrop-blur-sm
+            {% if category == 'error' %} border-red-500/30 bg-red-500/10 text-red-500
+            {% elif category == 'success' %} border-green-500/30 bg-green-500/10 text-green-500
+            {% else %} border-primary/30 bg-primary/10 text-primary {% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+  
   <main class="min-h-screen">
 
     <!-- ═══════════════ NAVBAR ═══════════════ -->

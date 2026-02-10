@@ -4,6 +4,9 @@ class Config:
     """Base configuration"""
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = os.getenv('SECRET_KEY', 'orchestrai-dev-secret-key-change-in-production')
+    SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
 
 class DevelopmentConfig(Config):
     """Development configuration"""

@@ -17,19 +17,24 @@ def login():
         if user and user.check_password(password):
             if user.role != role:
                 flash('Incorrect role selected for this account.', 'error')
+                return render_template('login.html')
             else:
+                # Clear any old session data completely
+                session.clear()
+                
                 # Store user info in session
                 session['user_id'] = user.id
                 session['username'] = user.username
                 session['role'] = user.role
+                session.permanent = True
 
                 flash(f'Welcome back, {user.username}!', 'success')
 
                 # Redirect based on role
                 if user.role == 'manager':
-                    return redirect(url_for('main.home'))  # TODO: manager dashboard
+                    return redirect(url_for('manager.dashboard'))
                 else:
-                    return redirect(url_for('main.home'))  # TODO: employee dashboard
+                    return redirect(url_for('employee.dashboard'))
         else:
             flash('Invalid username or password.', 'error')
 
@@ -41,3 +46,16 @@ def logout():
     session.clear()
     flash('You have been logged out.', 'success')
     return redirect(url_for('main.home'))
+
+
+@auth_bp.route('/clear-session')
+def clear_session():
+    """Force clear all session data - useful for debugging."""
+    session.clear()
+    return '''
+    <html><body style="font-family: Arial; text-align: center; padding: 50px;">
+    <h1>✓ Session Cleared!</h1>
+    <p>All browser session data has been cleared.</p>
+    <p><a href="/login" style="color: #7c3aed; text-decoration: none; font-weight: bold;">Go to Login Page →</a></p>
+    </body></html>
+    '''

@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Projects - OrchestrAi</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] } } }
+    }
+  </script>
+
+  <style>
+    :root {
+      --bg: #f4f0fb;
+      --bg-sidebar: #ffffff;
+      --bg-card: #ffffff;
+      --bg-card-alt: #faf8ff;
+      --fg: #1a1225;
+      --fg-secondary: #6b5f7d;
+      --fg-muted: #9b91ab;
+      --border: #ebe5f5;
+      --primary: #7c3aed;
+      --primary-light: #ede9fe;
+      --primary-hover: #6d28d9;
+      --success: #10b981;
+      --success-light: #d1fae5;
+      --warning: #f59e0b;
+      --warning-light: #fef3c7;
+      --danger: #ef4444;
+      --danger-light: #fee2e2;
+      --info: #3b82f6;
+      --info-light: #dbeafe;
+      --shadow-card: 0 1px 3px rgba(124,58,237,0.04), 0 4px 16px rgba(124,58,237,0.03);
+      --shadow-card-hover: 0 8px 32px rgba(124,58,237,0.12);
+    }
+    .dark {
+      --bg: #0c0a12;
+      --bg-sidebar: #13111a;
+      --bg-card: #1a1726;
+      --bg-card-alt: #1f1b2e;
+      --fg: #eee8f6;
+      --fg-secondary: #a89bc0;
+      --fg-muted: #6b5f7d;
+      --border: #2a2438;
+      --primary: #a78bfa;
+      --primary-light: rgba(167,139,250,0.12);
+      --primary-hover: #8b5cf6;
+      --success: #34d399;
+      --success-light: rgba(52,211,153,0.12);
+      --warning: #fbbf24;
+      --warning-light: rgba(251,191,36,0.12);
+      --danger: #f87171;
+      --danger-light: rgba(248,113,113,0.12);
+      --info: #60a5fa;
+      --info-light: rgba(96,165,250,0.12);
+      --shadow-card: 0 1px 3px rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.15);
+      --shadow-card-hover: 0 8px 32px rgba(124,58,237,0.2);
+    }
+    body { background: var(--bg); color: var(--fg); font-family: 'Inter', system-ui, sans-serif; }
+
+    .glass-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--shadow-card);
+      transition: all 0.25s ease;
+    }
+    .glass-card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-2px); }
+
+    .sidebar { background: var(--bg-sidebar); border-right: 1px solid var(--border); }
+    .sidebar-link {
+      display: flex; align-items: center; gap: 12px; padding: 10px 16px;
+      border-radius: 10px; font-size: 13px; font-weight: 500;
+      color: var(--fg-secondary); transition: all 0.15s ease;
+    }
+    .sidebar-link:hover { background: var(--primary-light); color: var(--primary); }
+    .sidebar-link.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--fg-muted); border-radius: 8px; }
+
+    .modal-backdrop { background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); }
+    .drop-zone { transition: all 0.2s; }
+    .drop-zone.dragover { border-color: var(--primary) !important; background: var(--primary-light) !important; }
+
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 600; }
+
+    .btn-primary {
+      background: var(--primary); color: #fff; border: none; border-radius: 12px;
+      font-size: 13px; font-weight: 600; padding: 12px 20px; cursor: pointer;
+      transition: all 0.15s; display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(124,58,237,0.3); }
+
+    .btn-ghost {
+      background: transparent; border: 1px solid var(--border); border-radius: 10px;
+      font-size: 13px; font-weight: 500; padding: 8px 14px;
+      color: var(--fg-secondary); cursor: pointer; transition: all 0.15s;
+    }
+    .btn-ghost:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+
+    .input-field {
+      width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 12px;
+      background: var(--bg-card-alt); color: var(--fg); font-size: 14px; outline: none;
+      transition: all 0.15s;
+    }
+    .input-field::placeholder { color: var(--fg-muted); }
+    .input-field:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(124,58,237,0.08); }
+
+    .project-card {
+      position: relative;
+      overflow: hidden;
+    }
+    .project-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--info));
+    }
+    .project-card.status-pending::before { background: linear-gradient(90deg, var(--warning), var(--warning)); }
+    .project-card.status-in_progress::before { background: linear-gradient(90deg, var(--info), var(--primary)); }
+    .project-card.status-completed::before { background: linear-gradient(90deg, var(--success), var(--success)); }
+  </style>
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('theme');
+        if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme:dark)').matches))
+          document.documentElement.classList.add('dark');
+      } catch (e) {}
+    })();
+  </script>
+</head>
+
+<body class="antialiased">
+  <div class="flex h-screen overflow-hidden">
+
+    <!-- ─────────────────── SIDEBAR ─────────────────── -->
+    <aside class="sidebar hidden lg:flex w-[260px] flex-col flex-shrink-0">
+      <div class="flex items-center gap-3 px-6 py-6">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl" style="background: var(--primary);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <div>
+          <div class="text-[15px] font-bold" style="color: var(--fg);">OrchestrAi</div>
+          <div class="text-[11px] font-medium" style="color: var(--fg-muted);">Manager Portal</div>
+        </div>
+      </div>
+
+      <nav class="flex-1 px-4 space-y-1 mt-2 overflow-y-auto">
+        <div class="text-[10px] font-bold uppercase tracking-widest px-3 mb-2" style="color: var(--fg-muted);">Main</div>
+        <a class="sidebar-link" href="{{ url_for('manager.dashboard') }}">
+          <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Overview
+        </a>
+        <a class="sidebar-link active" href="{{ url_for('manager.projects') }}">
+          <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          Projects
+        </a>
+        <a class="sidebar-link" href="{{ url_for('manager.employees') }}">
+          <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Employees
+        </a>
+
+        <div class="text-[10px] font-bold uppercase tracking-widest px-3 mb-2 mt-6" style="color: var(--fg-muted);">Settings</div>
+        <a class="sidebar-link" href="#">
+          <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Settings
+        </a>
+      </nav>
+
+      <div class="p-4">
+        <div class="rounded-2xl p-4" style="background: var(--primary-light); border: 1px solid var(--border);">
+          <div class="flex items-center gap-2 mb-2">
+            <svg class="w-4 h-4" style="color: var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span class="text-xs font-bold" style="color: var(--primary);">Need Help?</span>
+          </div>
+          <p class="text-[11px] leading-relaxed" style="color: var(--fg-muted);">Check our documentation for project management tips.</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ─────────────────── MAIN PANEL ─────────────────── -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+
+      <!-- Top Bar -->
+      <header class="flex items-center justify-between px-6 lg:px-8 h-[64px] flex-shrink-0" style="border-bottom: 1px solid var(--border); background: var(--bg-sidebar);">
+        <div>
+          <h1 class="text-[15px] font-bold" style="color: var(--fg);">Projects</h1>
+          <p class="text-[12px]" style="color: var(--fg-muted);">Manage all your projects and analyze CVs</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button onclick="toggleTheme()" class="w-9 h-9 rounded-xl flex items-center justify-center transition-colors" style="border: 1px solid var(--border); color: var(--fg-secondary);">
+            <svg id="sunIcon" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            <svg id="moonIcon" class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </button>
+          <div class="flex items-center gap-2.5 pl-3" style="border-left: 1px solid var(--border);">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style="background: var(--primary);">
+              {{ session.get('username', 'M')[0].upper() }}
+            </div>
+            <div class="hidden sm:block">
+              <div class="text-[13px] font-semibold" style="color: var(--fg);">{{ session.get('username', 'Manager') }}</div>
+              <div class="text-[11px]" style="color: var(--fg-muted);">Manager</div>
+            </div>
+          </div>
+          <a href="{{ url_for('auth.logout') }}" class="w-9 h-9 rounded-xl flex items-center justify-center transition-colors" style="border: 1px solid var(--border); color: var(--fg-secondary);" title="Logout">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </a>
+        </div>
+      </header>
+
+      <!-- Scrollable Content -->
+      <main class="flex-1 overflow-y-auto p-6 lg:p-8">
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="mb-5 rounded-xl px-4 py-3 text-[13px] font-medium flex items-center gap-2"
+                style="{% if category == 'error' %}background: var(--danger-light); color: var(--danger); border: 1px solid var(--danger);{% elif category == 'success' %}background: var(--success-light); color: var(--success); border: 1px solid var(--success);{% else %}background: var(--primary-light); color: var(--primary); border: 1px solid var(--primary);{% endif %}">
+                {% if category == 'success' %}
+                  <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                {% elif category == 'error' %}
+                  <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                {% endif %}
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- ─── STATS ROW ─── -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <div class="glass-card p-5">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: var(--primary-light);">
+                <svg class="w-5 h-5" style="color: var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              </div>
+            </div>
+            <div class="text-2xl font-extrabold" style="color: var(--fg);">{{ stats.total_projects }}</div>
+            <div class="text-[12px] mt-0.5" style="color: var(--fg-muted);">Total Projects</div>
+          </div>
+
+          <div class="glass-card p-5">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: var(--warning-light);">
+                <svg class="w-5 h-5" style="color: var(--warning);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+            </div>
+            <div class="text-2xl font-extrabold" style="color: var(--fg);">{{ stats.pending }}</div>
+            <div class="text-[12px] mt-0.5" style="color: var(--fg-muted);">Pending</div>
+          </div>
+
+          <div class="glass-card p-5">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: var(--info-light);">
+                <svg class="w-5 h-5" style="color: var(--info);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
+              </div>
+            </div>
+            <div class="text-2xl font-extrabold" style="color: var(--fg);">{{ stats.in_progress }}</div>
+            <div class="text-[12px] mt-0.5" style="color: var(--fg-muted);">In Progress</div>
+          </div>
+
+          <div class="glass-card p-5">
+            <div class="flex items-center justify-between mb-3">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: var(--success-light);">
+                <svg class="w-5 h-5" style="color: var(--success);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </div>
+            </div>
+            <div class="text-2xl font-extrabold" style="color: var(--fg);">{{ stats.completed }}</div>
+            <div class="text-[12px] mt-0.5" style="color: var(--fg-muted);">Completed</div>
+          </div>
+        </div>
+
+        <!-- ─── HEADER + ADD BUTTON ─── -->
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="text-xl font-bold" style="color: var(--fg);">All Projects</h2>
+            <p class="text-[13px]" style="color: var(--fg-muted);">Click on a project to view details</p>
+          </div>
+          <button onclick="openModal('addProjectModal')" class="btn-primary">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New Project
+          </button>
+        </div>
+
+        <!-- ─── PROJECTS GALLERY ─── -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          {% for project in projects %}
+            <div class="project-card glass-card p-5 cursor-pointer status-{{ project.status }}">
+              <!-- Status Badge -->
+              <div class="flex items-center justify-between mb-4">
+                <span class="badge" style="
+                  {% if project.status == 'completed' %}background: var(--success-light); color: var(--success);
+                  {% elif project.status == 'in_progress' %}background: var(--info-light); color: var(--info);
+                  {% else %}background: var(--warning-light); color: var(--warning);{% endif %}">
+                  <span class="w-1.5 h-1.5 rounded-full" style="
+                    {% if project.status == 'completed' %}background: var(--success);
+                    {% elif project.status == 'in_progress' %}background: var(--info);
+                    {% else %}background: var(--warning);{% endif %}"></span>
+                  {{ project.status.replace('_', ' ').title() }}
+                </span>
+                <!-- Delete -->
+                <form method="POST" action="{{ url_for('manager.delete_project', project_id=project.id) }}" onsubmit="return confirm('Delete this project?')">
+                  <button type="submit" class="w-7 h-7 rounded-lg flex items-center justify-center transition-colors" style="color: var(--fg-muted);"
+                    onmouseover="this.style.background='var(--danger-light)';this.style.color='var(--danger)'"
+                    onmouseout="this.style.background='transparent';this.style.color='var(--fg-muted)'">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  </button>
+                </form>
+              </div>
+
+              <!-- Project Icon -->
+              <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-4" style="background: linear-gradient(135deg, var(--primary), var(--info));">
+                <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              </div>
+
+              <!-- Name & Date -->
+              <h3 class="text-[15px] font-bold mb-1" style="color: var(--fg);">{{ project.name }}</h3>
+              <p class="text-[12px]" style="color: var(--fg-muted);">Created {{ project.created_at.strftime('%b %d, %Y') }}</p>
+
+              <!-- Files Indicator -->
+              <div class="flex items-center gap-3 mt-4 pt-4" style="border-top: 1px solid var(--border);">
+                <div class="flex items-center gap-1.5 text-[11px]" style="color: {{ 'var(--success)' if project.cv_path else 'var(--fg-muted)' }};">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  CV {{ '✓' if project.cv_path else '—' }}
+                </div>
+                <div class="flex items-center gap-1.5 text-[11px]" style="color: {{ 'var(--success)' if project.specs_path else 'var(--fg-muted)' }};">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                  Specs {{ '✓' if project.specs_path else '—' }}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+
+          <!-- Empty State or Add New Card -->
+          {% if not projects %}
+            <div class="col-span-full py-16 text-center">
+              <div class="w-20 h-20 mx-auto mb-5 rounded-3xl flex items-center justify-center" style="background: var(--primary-light);">
+                <svg class="w-10 h-10" style="color: var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+              </div>
+              <h3 class="text-lg font-bold mb-2" style="color: var(--fg);">No projects yet</h3>
+              <p class="text-[13px] mb-6" style="color: var(--fg-muted);">Create your first project to get started with CV analysis</p>
+              <button onclick="openModal('addProjectModal')" class="btn-primary">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Create First Project
+              </button>
+            </div>
+          {% endif %}
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- MODAL: Add New Project                        -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div id="addProjectModal" class="modal-backdrop fixed inset-0 z-[100] hidden items-center justify-center p-4" onclick="if(event.target===this)closeModal('addProjectModal')">
+    <div class="w-full max-w-lg rounded-3xl p-8" style="background: var(--bg-card); border: 1px solid var(--border); box-shadow: 0 32px 64px rgba(0,0,0,0.2);">
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-8">
+        <div>
+          <h3 class="text-xl font-bold" style="color: var(--fg);">New Project</h3>
+          <p class="text-[13px] mt-1" style="color: var(--fg-muted);">Upload CV and project specs to analyze</p>
+        </div>
+        <button onclick="closeModal('addProjectModal')" class="w-10 h-10 rounded-xl flex items-center justify-center" style="color: var(--fg-muted); background: var(--bg-card-alt);">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <form method="POST" action="{{ url_for('manager.add_project') }}" enctype="multipart/form-data" class="space-y-6">
+        <!-- Project Name -->
+        <div>
+          <label class="block text-[13px] font-semibold mb-2" style="color: var(--fg);">Project Name <span style="color: var(--danger);">*</span></label>
+          <input type="text" name="name" required placeholder="e.g. OrchestrAi Frontend Developer" class="input-field" />
+        </div>
+
+        <!-- Two Upload Zones -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- CV Upload -->
+          <div>
+            <label class="block text-[13px] font-semibold mb-2" style="color: var(--fg);">
+              <span class="flex items-center gap-2">
+                <svg class="w-4 h-4" style="color: var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Upload CV
+              </span>
+            </label>
+            <label class="drop-zone flex cursor-pointer flex-col items-center gap-2 rounded-xl p-4 transition-all" style="border: 2px dashed var(--border);"
+              ondragover="this.classList.add('dragover'); event.preventDefault()"
+              ondragleave="this.classList.remove('dragover')">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: var(--primary-light);">
+                <svg class="w-5 h-5" style="color: var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              </div>
+              <span class="text-[12px] font-medium text-center" style="color: var(--fg-secondary);">Drop or click</span>
+              <span class="text-[10px]" style="color: var(--fg-muted);">PDF, DOCX</span>
+              <input type="file" name="cv_file" accept=".pdf,.docx,.doc" class="hidden" onchange="this.closest('label').querySelector('span').textContent = this.files[0]?.name || 'Drop or click'" />
+            </label>
+          </div>
+
+          <!-- Specs Upload -->
+          <div>
+            <label class="block text-[13px] font-semibold mb-2" style="color: var(--fg);">
+              <span class="flex items-center gap-2">
+                <svg class="w-4 h-4" style="color: var(--success);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                Project Specs
+              </span>
+            </label>
+            <label class="drop-zone flex cursor-pointer flex-col items-center gap-2 rounded-xl p-4 transition-all" style="border: 2px dashed var(--border);"
+              ondragover="this.classList.add('dragover'); event.preventDefault()"
+              ondragleave="this.classList.remove('dragover')">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: var(--success-light);">
+                <svg class="w-5 h-5" style="color: var(--success);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              </div>
+              <span class="text-[12px] font-medium text-center" style="color: var(--fg-secondary);">Drop or click</span>
+              <span class="text-[10px]" style="color: var(--fg-muted);">PDF, DOCX</span>
+              <input type="file" name="specs_file" accept=".pdf,.docx,.doc" class="hidden" onchange="this.closest('label').querySelector('span').textContent = this.files[0]?.name || 'Drop or click'" />
+            </label>
+          </div>
+        </div>
+
+        <!-- Start Button -->
+        <button type="submit" class="btn-primary w-full justify-center text-[15px] py-4">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Start Project
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- SCRIPTS                                       -->
+  <!-- ══════════════════════════════════════════════ -->
+  <script>
+    function updateThemeIcons() {
+      var d = document.documentElement.classList.contains('dark');
+      document.getElementById('sunIcon').style.display = d ? 'none' : 'block';
+      document.getElementById('moonIcon').style.display = d ? 'block' : 'none';
+    }
+    updateThemeIcons();
+
+    function toggleTheme() {
+      var d = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme', d ? 'dark' : 'light');
+      updateThemeIcons();
+    }
+
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+      document.getElementById(id).classList.add('flex');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+      document.getElementById(id).classList.remove('flex');
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeModal('addProjectModal');
+    });
+  </script>
+</body>
+</html>
