@@ -281,8 +281,9 @@
               <table class="w-full emp-table">
                 <thead>
                   <tr>
-                    <th class="px-6 py-3 text-left">Member</th>
+                    <th class="px-6 py-3 text-left">Employee</th>
                     <th class="px-6 py-3 text-left">Email</th>
+                    <th class="px-6 py-3 text-left">Competencies</th>
                     <th class="px-6 py-3 text-left">Joined</th>
                     <th class="px-6 py-3 text-left">Status</th>
                     <th class="px-6 py-3 text-right">Actions</th>
@@ -294,32 +295,59 @@
                       <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
                           <div class="w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-bold text-white flex-shrink-0" style="background: linear-gradient(135deg, var(--primary), var(--primary-hover));">
-                            {{ emp.username[0].upper() }}
+                            {{ (emp.name or emp.username)[0].upper() }}
                           </div>
                           <div>
-                            <div class="text-[14px] font-semibold" style="color: var(--fg);">{{ emp.username }}</div>
-                            <div class="text-[11px]" style="color: var(--fg-muted);">Employee</div>
+                            <div class="text-[14px] font-semibold" style="color: var(--fg);">{{ emp.name or emp.username }}</div>
+                            <div class="text-[11px]" style="color: var(--fg-muted);">@{{ emp.username }}</div>
                           </div>
                         </div>
                       </td>
                       <td class="px-6 py-4">{{ emp.email or '—' }}</td>
+                      <td class="px-6 py-4">
+                        {% if emp.competencies %}
+                          {% set skills = emp.competencies | replace('[', '') | replace(']', '') | replace('"', '') | replace("'", "") %}
+                          {% set skill_list = skills.split(',')[:3] %}
+                          <div class="flex flex-wrap gap-1 max-w-[200px]">
+                            {% for skill in skill_list %}
+                              <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium" style="background: var(--primary-light); color: var(--primary);">
+                                {{ skill.strip()[:15] }}{% if skill.strip()|length > 15 %}...{% endif %}
+                              </span>
+                            {% endfor %}
+                            {% if skills.split(',')|length > 3 %}
+                              <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium" style="background: var(--fg-muted); color: var(--bg);">
+                                +{{ skills.split(',')|length - 3 }}
+                              </span>
+                            {% endif %}
+                          </div>
+                        {% else %}
+                          <span class="text-[11px]" style="color: var(--fg-muted);">No skills listed</span>
+                        {% endif %}
+                      </td>
                       <td class="px-6 py-4">{{ emp.created_at.strftime('%b %d, %Y') if emp.created_at else '—' }}</td>
                       <td class="px-6 py-4">
-                        <span class="badge" style="background: var(--success-light); color: var(--success);">
-                          <span class="w-1.5 h-1.5 rounded-full" style="background: var(--success);"></span>
-                          Active
-                        </span>
+                        {% if emp.status == 'active' %}
+                          <span class="badge" style="background: var(--success-light); color: var(--success);">
+                            <span class="w-1.5 h-1.5 rounded-full" style="background: var(--success);"></span>
+                            Active
+                          </span>
+                        {% else %}
+                          <span class="badge" style="background: var(--danger-light); color: var(--danger);">
+                            <span class="w-1.5 h-1.5 rounded-full" style="background: var(--danger);"></span>
+                            Inactive
+                          </span>
+                        {% endif %}
                       </td>
                       <td class="px-6 py-4 text-right">
                         <div class="flex items-center justify-end gap-1">
-                          <button onclick="openEditModal({{ emp.id }}, '{{ emp.username }}', '{{ emp.email or "" }}')"
+                          <button onclick="openEditModal({{ emp.id }}, '{{ emp.username }}', '{{ emp.email or "" }}', '{{ emp.name or "" }}', '{{ emp.status }}')"
                             class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors" style="color: var(--fg-muted);"
                             onmouseover="this.style.background='var(--primary-light)';this.style.color='var(--primary)'"
                             onmouseout="this.style.background='transparent';this.style.color='var(--fg-muted)'"
                             title="Edit">
                             <svg class="w-[15px] h-[15px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                           </button>
-                          <button onclick="confirmDelete({{ emp.id }}, '{{ emp.username }}')"
+                          <button onclick="confirmDelete({{ emp.id }}, '{{ emp.name or emp.username }}')"
                             class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors" style="color: var(--fg-muted);"
                             onmouseover="this.style.background='var(--danger-light)';this.style.color='var(--danger)'"
                             onmouseout="this.style.background='transparent';this.style.color='var(--fg-muted)'"
@@ -355,32 +383,96 @@
       <div class="flex items-center justify-between mb-6">
         <div>
           <h3 class="text-[16px] font-bold" style="color: var(--fg);">Add New Employee</h3>
-          <p class="text-[12px] mt-0.5" style="color: var(--fg-muted);">Fill in the details below</p>
+          <p class="text-[12px] mt-0.5" style="color: var(--fg-muted);">Upload employee CV to auto-extract information</p>
         </div>
         <button onclick="closeModal('addEmployeeModal')" class="w-8 h-8 rounded-lg flex items-center justify-center" style="color: var(--fg-muted);">
           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
-      <form method="POST" action="{{ url_for('manager.add_employee') }}" class="space-y-4">
+      <form method="POST" action="{{ url_for('manager.add_employee') }}" enctype="multipart/form-data" class="space-y-4">
+        <!-- CV Upload Drop Zone -->
         <div>
-          <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg);">Username <span style="color: var(--danger);">*</span></label>
-          <input type="text" name="username" required placeholder="e.g. john_doe" class="input-field" />
+          <label class="block text-[12px] font-semibold mb-2" style="color: var(--fg);">Upload CV <span style="color: var(--danger);">*</span></label>
+          <div id="dropZone" class="border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all"
+               style="border-color: var(--border); background: var(--bg-card-alt);"
+               onclick="document.getElementById('cvFileInput').click()"
+               ondragover="event.preventDefault(); this.style.borderColor='var(--primary)'; this.style.background='var(--primary-light)';"
+               ondragleave="this.style.borderColor='var(--border)'; this.style.background='var(--bg-card-alt)';"
+               ondrop="handleDrop(event)">
+            <input type="file" id="cvFileInput" name="cv_file" accept=".pdf" required class="hidden" onchange="handleFileSelect(event)" />
+            <div id="dropZoneContent">
+              <div class="w-12 h-12 mx-auto mb-3 rounded-xl flex items-center justify-center" style="background: var(--primary-light);">
+                <svg class="w-6 h-6" style="color: var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>
+                </svg>
+              </div>
+              <p class="text-[13px] font-medium" style="color: var(--fg);">Drop CV here or click to browse</p>
+              <p class="text-[11px] mt-1" style="color: var(--fg-muted);">PDF format only (max 16MB)</p>
+            </div>
+            <div id="fileSelected" class="hidden">
+              <div class="w-12 h-12 mx-auto mb-3 rounded-xl flex items-center justify-center" style="background: var(--success-light);">
+                <svg class="w-6 h-6" style="color: var(--success);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+              </div>
+              <p id="selectedFileName" class="text-[13px] font-medium" style="color: var(--fg);"></p>
+              <p class="text-[11px] mt-1" style="color: var(--success);">File ready for upload</p>
+            </div>
+          </div>
         </div>
-        <div>
-          <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg);">Email</label>
-          <input type="email" name="email" placeholder="john@example.com" class="input-field" />
+        
+        <!-- Info Box -->
+        <div class="rounded-xl p-4" style="background: var(--info-light); border: 1px solid var(--info);">
+          <div class="flex items-start gap-3">
+            <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color: var(--info);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            <div>
+              <p class="text-[12px] font-semibold" style="color: var(--info);">AI-Powered Extraction</p>
+              <p class="text-[11px] mt-1" style="color: var(--fg-secondary);">
+                The AI will automatically extract: Name, Email, Skills/Competencies and generate a unique username and password.
+              </p>
+            </div>
+          </div>
         </div>
-        <div>
-          <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg);">Password <span style="color: var(--danger);">*</span></label>
-          <input type="password" name="password" required placeholder="Minimum 6 characters" class="input-field" />
-        </div>
+        
         <button type="submit" class="btn-primary w-full justify-center mt-2">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Add Employee
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          Upload & Analyze CV
         </button>
       </form>
     </div>
   </div>
+
+  <script>
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (file) {
+        document.getElementById('dropZoneContent').classList.add('hidden');
+        document.getElementById('fileSelected').classList.remove('hidden');
+        document.getElementById('selectedFileName').textContent = file.name;
+      }
+    }
+    
+    function handleDrop(event) {
+      event.preventDefault();
+      const dropZone = document.getElementById('dropZone');
+      dropZone.style.borderColor = 'var(--border)';
+      dropZone.style.background = 'var(--bg-card-alt)';
+      
+      const file = event.dataTransfer.files[0];
+      if (file && file.type === 'application/pdf') {
+        document.getElementById('cvFileInput').files = event.dataTransfer.files;
+        document.getElementById('dropZoneContent').classList.add('hidden');
+        document.getElementById('fileSelected').classList.remove('hidden');
+        document.getElementById('selectedFileName').textContent = file.name;
+      } else {
+        alert('Please upload a PDF file only.');
+      }
+    }
+  </script>
 
   <!-- ══════════════════════════════════════════════ -->
   <!-- MODAL: Edit Employee                          -->
@@ -398,12 +490,23 @@
       </div>
       <form id="editForm" method="POST" class="space-y-4">
         <div>
+          <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg);">Full Name</label>
+          <input type="text" id="editName" name="name" class="input-field" placeholder="e.g. John Doe" />
+        </div>
+        <div>
           <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg);">Username</label>
           <input type="text" id="editUsername" name="username" class="input-field" />
         </div>
         <div>
           <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg);">Email</label>
           <input type="email" id="editEmail" name="email" class="input-field" />
+        </div>
+        <div>
+          <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg);">Status</label>
+          <select id="editStatus" name="status" class="input-field">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
         </div>
         <div>
           <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg);">New Password</label>
@@ -462,9 +565,11 @@
       document.body.style.overflow = '';
     }
 
-    function openEditModal(id, username, email) {
+    function openEditModal(id, username, email, name, status) {
+      document.getElementById('editName').value = name || '';
       document.getElementById('editUsername').value = username;
       document.getElementById('editEmail').value = email;
+      document.getElementById('editStatus').value = status || 'active';
       document.getElementById('editForm').action = '/manager/employees/edit/' + id;
       openModal('editEmployeeModal');
     }

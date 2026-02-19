@@ -6,11 +6,11 @@ from routes import register_blueprints
 
 def create_app(config_name='development'):
     """Application factory — creates and configures the Flask app."""
-    app = Flask(__name__)
+    app = Flask(__name__) # Create Flask app
     app.config.from_object(config[config_name])
 
     # Initialize extensions
-    db.init_app(app)
+    db.init_app(app)  # Connect database to Flask app
 
     # Register all blueprints (routes)
     register_blueprints(app)

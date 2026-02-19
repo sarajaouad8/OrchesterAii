@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ project.nom_projet or project.name }} - OrchestrAi</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] } } }
+    }
+  </script>
+
+  <style>
+    :root {
+      --bg: #f4f0fb; --bg-sidebar: #ffffff; --bg-card: #ffffff; --bg-card-alt: #faf8ff;
+      --fg: #1a1225; --fg-secondary: #6b5f7d; --fg-muted: #9b91ab; --border: #ebe5f5;
+      --primary: #7c3aed; --primary-light: #ede9fe; --primary-hover: #6d28d9;
+      --success: #10b981; --success-light: #d1fae5;
+      --warning: #f59e0b; --warning-light: #fef3c7;
+      --danger: #ef4444; --danger-light: #fee2e2;
+      --info: #3b82f6; --info-light: #dbeafe;
+      --shadow-card: 0 1px 3px rgba(124,58,237,0.04), 0 4px 16px rgba(124,58,237,0.03);
+      --shadow-card-hover: 0 8px 32px rgba(124,58,237,0.12);
+    }
+    .dark {
+      --bg: #0c0a12; --bg-sidebar: #13111a; --bg-card: #1a1726; --bg-card-alt: #1f1b2e;
+      --fg: #eee8f6; --fg-secondary: #a89bc0; --fg-muted: #6b5f7d; --border: #2a2438;
+      --primary: #a78bfa; --primary-light: rgba(167,139,250,0.12); --primary-hover: #8b5cf6;
+      --success: #34d399; --success-light: rgba(52,211,153,0.12);
+      --warning: #fbbf24; --warning-light: rgba(251,191,36,0.12);
+      --danger: #f87171; --danger-light: rgba(248,113,113,0.12);
+      --info: #60a5fa; --info-light: rgba(96,165,250,0.12);
+      --shadow-card: 0 1px 3px rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.15);
+      --shadow-card-hover: 0 8px 32px rgba(124,58,237,0.2);
+    }
+    body { background: var(--bg); color: var(--fg); font-family: 'Inter', system-ui, sans-serif; }
+
+    .glass-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px;
+      box-shadow: var(--shadow-card); transition: all 0.25s ease;
+    }
+
+    .sidebar { background: var(--bg-sidebar); border-right: 1px solid var(--border); }
+    .sidebar-link {
+      display: flex; align-items: center; gap: 12px; padding: 10px 16px;
+      border-radius: 10px; font-size: 13px; font-weight: 500;
+      color: var(--fg-secondary); transition: all 0.15s ease; text-decoration: none;
+    }
+    .sidebar-link:hover { background: var(--primary-light); color: var(--primary); }
+    .sidebar-link.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--fg-muted); border-radius: 8px; }
+
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+
+    .btn-primary {
+      background: var(--primary); color: #fff; border: none; border-radius: 12px;
+      font-size: 13px; font-weight: 600; padding: 10px 18px; cursor: pointer;
+      transition: all 0.15s; display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
+    }
+    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+
+    .btn-ghost {
+      background: transparent; border: 1px solid var(--border); border-radius: 10px;
+      font-size: 13px; font-weight: 500; padding: 8px 14px;
+      color: var(--fg-secondary); cursor: pointer; transition: all 0.15s;
+    }
+    .btn-ghost:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+
+    .btn-sm {
+      padding: 6px 12px; font-size: 12px; border-radius: 8px;
+      font-weight: 500; cursor: pointer; transition: all 0.15s; border: none;
+    }
+
+    /* ── Table ── */
+    .tasks-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    .tasks-table thead th {
+      padding: 10px 14px; font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.05em; color: var(--fg-muted); text-align: left;
+      border-bottom: 1px solid var(--border); white-space: nowrap;
+      background: var(--bg-card); position: sticky; top: 0; z-index: 5;
+    }
+    .tasks-table tbody td {
+      padding: 12px 14px; font-size: 13px; border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .tasks-table tbody tr { transition: background 0.1s; }
+    .tasks-table tbody tr:hover { background: var(--primary-light); }
+
+    /* ── Status pills ── */
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px;
+      border-radius: 100px; font-size: 11px; font-weight: 600; cursor: default;
+    }
+    .status-pill .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .status-done { background: var(--success-light); color: var(--success); }
+    .status-done .dot { background: var(--success); }
+    .status-progress { background: var(--info-light); color: var(--info); }
+    .status-progress .dot { background: var(--info); }
+    .status-todo { background: var(--bg-card-alt); color: var(--fg-muted); border: 1px solid var(--border); }
+    .status-todo .dot { background: var(--fg-muted); }
+
+    /* ── Priority ── */
+    .priority-high { background: var(--danger-light); color: var(--danger); }
+    .priority-med { background: var(--warning-light); color: var(--warning); }
+    .priority-low { background: var(--success-light); color: var(--success); }
+
+    /* ── Avatar ── */
+    .avatar {
+      width: 26px; height: 26px; border-radius: 50%; display: inline-flex;
+      align-items: center; justify-content: center; font-size: 11px; font-weight: 700;
+      color: #fff; flex-shrink: 0;
+    }
+
+    /* ── Task checkbox (circle) ── */
+    .task-check {
+      width: 18px; height: 18px; border: 2px solid var(--border); border-radius: 50%;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s; flex-shrink: 0; background: transparent;
+    }
+    .task-check:hover { border-color: var(--primary); background: var(--primary-light); }
+    .task-check.done { background: var(--success); border-color: var(--success); }
+    .task-check.done svg { display: block; }
+    .task-check svg { display: none; width: 10px; height: 10px; color: #fff; }
+
+    /* ── Sub-task checkbox (square, to-do style) ── */
+    .st-check {
+      width: 16px; height: 16px; border: 1.5px solid var(--border); border-radius: 4px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s; flex-shrink: 0; background: transparent; margin-top: 2px;
+    }
+    .st-check:hover { border-color: var(--primary); }
+    .st-check.done { background: var(--primary); border-color: var(--primary); }
+    .st-check.done svg { display: block; }
+    .st-check svg { display: none; width: 10px; height: 10px; color: #fff; }
+    .st-text-done { text-decoration: line-through; opacity: 0.5; }
+
+    /* ── Skill tags ── */
+    .skill-tag {
+      display: inline-block; padding: 3px 8px; border-radius: 6px;
+      font-size: 10px; font-weight: 600; margin: 2px;
+      background: var(--primary-light); color: var(--primary);
+    }
+
+    /* ── Task name ── */
+    .task-name-link {
+      font-weight: 600; color: var(--fg); cursor: pointer; transition: color 0.1s;
+    }
+    .task-name-link:hover { color: var(--primary); }
+
+    /* ── Filter tabs ── */
+    .filter-tab {
+      display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px;
+      border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer;
+      border: none; background: transparent; color: var(--fg-muted); transition: all 0.15s;
+    }
+    .filter-tab:hover { background: var(--primary-light); color: var(--primary); }
+    .filter-tab.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+    .filter-count {
+      font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px;
+      background: var(--border); color: var(--fg-muted);
+    }
+    .filter-tab.active .filter-count { background: var(--primary); color: #fff; }
+
+    /* ── Modal ── */
+    .modal-backdrop { background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); }
+    .input-field {
+      width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px;
+      background: var(--bg-card-alt); color: var(--fg); font-size: 13px; outline: none; transition: all 0.15s;
+    }
+    .input-field:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(124,58,237,0.08); }
+    select.input-field { appearance: none; cursor: pointer; }
+
+    /* ── Progress bar ── */
+    .progress-bar { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; background: linear-gradient(90deg, var(--primary), var(--success)); }
+
+    /* ── Deliverable item ── */
+    .deliverable-item {
+      display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+      border-radius: 10px; background: var(--bg-card-alt); border: 1px solid var(--border);
+      font-size: 13px; color: var(--fg); transition: all 0.15s;
+    }
+    .deliverable-item:hover { border-color: var(--success); }
+    .deliverable-icon {
+      width: 28px; height: 28px; border-radius: 8px; display: flex;
+      align-items: center; justify-content: center; flex-shrink: 0;
+      background: var(--success-light);
+    }
+  </style>
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('theme');
+        if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme:dark)').matches))
+          document.documentElement.classList.add('dark');
+      } catch (e) {}
+    })();
+  </script>
+</head>
+
+<body class="antialiased">
+  <div class="flex h-screen overflow-hidden">
+
+    <!-- ─────────────────── SIDEBAR (same as dashboard) ─────────────────── -->
+    <aside class="sidebar hidden lg:flex w-[260px] flex-col flex-shrink-0">
+      <div class="flex items-center gap-3 px-6 py-6">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl" style="background: var(--primary);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <div>
+          <div class="text-[15px] font-bold" style="color: var(--fg);">OrchestrAi</div>
+          <div class="text-[11px] font-medium" style="color: var(--fg-muted);">Manager Portal</div>
+        </div>
+      </div>
+
+      <nav class="flex-1 px-4 space-y-1 mt-2 overflow-y-auto">
+        <div class="text-[10px] font-bold uppercase tracking-widest px-3 mb-2" style="color: var(--fg-muted);">Main</div>
+        <a class="sidebar-link" href="{{ url_for('manager.dashboard') }}">
+          <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Overview
+        </a>
+        <a class="sidebar-link active" href="{{ url_for('manager.projects') }}">
+          <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          Projects
+        </a>
+        <a class="sidebar-link" href="{{ url_for('manager.employees') }}">
+          <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Employees
+        </a>
+
+        <div class="text-[10px] font-bold uppercase tracking-widest px-3 mb-2 mt-6" style="color: var(--fg-muted);">Settings</div>
+        <a class="sidebar-link" href="#">
+          <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Settings
+        </a>
+      </nav>
+
+      <div class="p-4">
+        <div class="rounded-2xl p-4" style="background: linear-gradient(135deg, var(--primary), var(--primary-hover));">
+          <div class="flex items-center gap-2 mb-2">
+            <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <span class="text-xs font-bold text-white">AI Powered</span>
+          </div>
+          <p class="text-[11px] leading-relaxed text-white/80">Tasks are auto-generated from your project specs.</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ─────────────────── MAIN ─────────────────── -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+
+      <!-- Top Bar -->
+      <header class="flex items-center justify-between px-6 lg:px-8 h-[64px] flex-shrink-0" style="border-bottom: 1px solid var(--border); background: var(--bg-sidebar);">
+        <div class="flex items-center gap-4">
+          <a href="{{ url_for('manager.projects') }}" class="w-9 h-9 rounded-xl flex items-center justify-center" style="border: 1px solid var(--border); color: var(--fg-secondary);" title="Back to projects">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          </a>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-[15px] font-bold" style="color: var(--fg);">{{ project.nom_projet or project.name }}</h1>
+              {% if stats.total_tasks > 0 %}
+              <span class="badge" style="background: var(--primary-light); color: var(--primary);">
+                {% set pct = (stats.completed * 100 / stats.total_tasks)|round|int %}{{ pct }}% complete
+              </span>
+              {% endif %}
+            </div>
+            <p class="text-[12px]" style="color: var(--fg-muted);">Created {{ project.created_at.strftime('%b %d, %Y') }}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <button onclick="toggleTheme()" class="w-9 h-9 rounded-xl flex items-center justify-center" style="border: 1px solid var(--border); color: var(--fg-secondary);">
+            <svg id="sunIcon" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            <svg id="moonIcon" class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </button>
+          <div class="flex items-center gap-2.5 pl-3" style="border-left: 1px solid var(--border);">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style="background: var(--primary);">
+              {{ session.get('username', 'M')[0].upper() }}
+            </div>
+          </div>
+          <a href="{{ url_for('auth.logout') }}" class="w-9 h-9 rounded-xl flex items-center justify-center" style="border: 1px solid var(--border); color: var(--fg-secondary);" title="Logout">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </a>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <main class="flex-1 overflow-y-auto p-6 lg:p-8">
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="mb-4 rounded-xl px-4 py-3 text-[13px] font-medium flex items-center gap-2"
+                style="{% if category == 'error' %}background: var(--danger-light); color: var(--danger);{% elif category == 'success' %}background: var(--success-light); color: var(--success);{% else %}background: var(--primary-light); color: var(--primary);{% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- ─── Stats Row ─── -->
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+          <div class="glass-card p-4 text-center">
+            <div class="text-2xl font-extrabold" style="color: var(--fg);">{{ stats.total_tasks }}</div>
+            <div class="text-[11px] mt-1 font-medium" style="color: var(--fg-muted);">Total Tasks</div>
+          </div>
+          <div class="glass-card p-4 text-center">
+            <div class="text-2xl font-extrabold" style="color: var(--fg-muted);">{{ stats.not_started }}</div>
+            <div class="text-[11px] mt-1 font-medium" style="color: var(--fg-muted);">Not Started</div>
+          </div>
+          <div class="glass-card p-4 text-center">
+            <div class="text-2xl font-extrabold" style="color: var(--info);">{{ stats.in_progress }}</div>
+            <div class="text-[11px] mt-1 font-medium" style="color: var(--fg-muted);">In Progress</div>
+          </div>
+          <div class="glass-card p-4 text-center">
+            <div class="text-2xl font-extrabold" style="color: var(--success);">{{ stats.completed }}</div>
+            <div class="text-[11px] mt-1 font-medium" style="color: var(--fg-muted);">Completed</div>
+          </div>
+          <div class="glass-card p-4 text-center">
+            <div class="text-2xl font-extrabold" style="color: var(--primary);">{{ stats.total_days }}</div>
+            <div class="text-[11px] mt-1 font-medium" style="color: var(--fg-muted);">Est. Days</div>
+          </div>
+        </div>
+
+        <!-- ─── Project Info + Deliverables ─── -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+          <!-- Summary (compact) -->
+          {% if project.resume %}
+          <div class="glass-card p-5">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-8 h-8 rounded-xl flex items-center justify-center" style="background: var(--primary-light);">
+                <svg class="w-4 h-4" style="color: var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </div>
+              <h3 class="text-[14px] font-bold" style="color: var(--fg);">Project Summary</h3>
+            </div>
+            <p class="text-[13px] leading-relaxed" style="color: var(--fg-secondary); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">{{ project.resume }}</p>
+            {% if project.estimation_globale %}
+            <div class="flex flex-wrap gap-4 mt-3 text-[12px]" style="color: var(--fg-muted);">
+              {% if project.estimation_globale.get('duree_totale_jours') %}
+              <span>⏱ <strong style="color: var(--fg);">{{ project.estimation_globale.duree_totale_jours }}d</strong></span>
+              {% endif %}
+              {% if project.estimation_globale.get('date_livraison_estimee') %}
+              <span>📅 <strong style="color: var(--fg);">{{ project.estimation_globale.date_livraison_estimee }}</strong></span>
+              {% endif %}
+              {% if project.estimation_globale.get('cout_total_estime_euros') %}
+              <span>💰 <strong style="color: var(--fg);">{{ project.estimation_globale.cout_total_estime_euros }}&#8364;</strong></span>
+              {% endif %}
+            </div>
+            {% endif %}
+            <!-- Progress bar -->
+            <div class="mt-3">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-[11px] font-semibold" style="color: var(--fg-muted);">Progress</span>
+                <span class="text-[11px] font-bold" style="color: var(--primary);">{% if stats.total_tasks > 0 %}{{ (stats.completed * 100 / stats.total_tasks)|round|int }}{% else %}0{% endif %}%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: {% if stats.total_tasks > 0 %}{{ (stats.completed * 100 / stats.total_tasks)|round|int }}{% else %}0{% endif %}%;"></div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Deliverables (collapsible) -->
+          {% if project.livrables_attendus %}
+          <div class="glass-card p-5">
+            <div class="flex items-center justify-between cursor-pointer" onclick="toggleDeliverables()">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-xl flex items-center justify-center" style="background: var(--success-light);">
+                  <svg class="w-4 h-4" style="color: var(--success);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                </div>
+                <h3 class="text-[14px] font-bold" style="color: var(--fg);">Deliverables</h3>
+                <span class="badge" style="background: var(--success-light); color: var(--success);">{{ project.livrables_attendus|length }}</span>
+              </div>
+              <button id="delivToggleBtn" class="w-7 h-7 rounded-lg flex items-center justify-center transition-transform" style="color: var(--fg-muted); background: var(--bg-card-alt);">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+            </div>
+            <div id="delivContent" class="space-y-2 mt-3" style="display: none;">
+              {% for l in project.livrables_attendus %}
+              <div class="deliverable-item">
+                <div class="deliverable-icon">
+                  <svg class="w-3.5 h-3.5" style="color: var(--success);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 12l2 2 4-4"/></svg>
+                </div>
+                <span class="text-[13px] font-medium">{{ l }}</span>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- ────── TASKS TABLE ────── -->
+        <div class="glass-card overflow-hidden">
+
+          <!-- Table header bar -->
+          <div class="flex items-center justify-between px-5 py-4" style="border-bottom: 1px solid var(--border);">
+            <div class="flex items-center gap-3">
+              <h2 class="text-[15px] font-bold" style="color: var(--fg);">Tasks</h2>
+              <div class="flex items-center gap-1 ml-2">
+                <button class="filter-tab active" onclick="filterByStatus('', this)" data-filter="all">
+                  All <span class="filter-count">{{ stats.total_tasks }}</span>
+                </button>
+                <button class="filter-tab" onclick="filterByStatus('not started', this)" data-filter="not started">
+                  <span style="width:6px;height:6px;border-radius:50%;background:var(--fg-muted);display:inline-block;"></span>
+                  To Do <span class="filter-count">{{ stats.not_started }}</span>
+                </button>
+                <button class="filter-tab" onclick="filterByStatus('in_progress', this)" data-filter="in_progress">
+                  <span style="width:6px;height:6px;border-radius:50%;background:var(--info);display:inline-block;"></span>
+                  In Progress <span class="filter-count">{{ stats.in_progress }}</span>
+                </button>
+                <button class="filter-tab" onclick="filterByStatus('completed', this)" data-filter="completed">
+                  <span style="width:6px;height:6px;border-radius:50%;background:var(--success);display:inline-block;"></span>
+                  Done <span class="filter-count">{{ stats.completed }}</span>
+                </button>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <form method="POST" action="{{ url_for('manager.auto_match_project', project_id=project.id) }}" style="display:inline;">
+                <button type="submit" class="btn-primary" style="font-size: 12px; padding: 8px 14px; border-radius: 10px;" title="Auto-assign employees to unassigned tasks based on skills">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                  Auto-Match
+                </button>
+              </form>
+              <div class="relative">
+                <input type="text" id="searchInput" placeholder="Search tasks..."
+                  class="input-field" style="width: 200px; padding: 7px 12px 7px 32px; font-size: 12px; border-radius: 10px;"
+                  oninput="filterTasks(this.value)" />
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style="color: var(--fg-muted);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Table -->
+          {% if tasks %}
+          <div style="overflow-x: auto;">
+            <table class="tasks-table" id="tasksTable">
+              <thead>
+                <tr>
+                  <th style="width: 42px; padding-left: 16px;"></th>
+                  <th style="width: 50px;">ID</th>
+                  <th style="min-width: 260px;">Task</th>
+                  <th style="width: 130px;">Status</th>
+                  <th style="width: 100px;">Priority</th>
+                  <th style="width: 180px;">Assignee</th>
+                  <th style="width: 70px;">Days</th>
+                  <th style="width: 160px;">Skills</th>
+                  <th style="width: 45px;"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for task in tasks %}
+                <tr data-task-id="{{ task.id }}" data-status="{{ task.status }}" data-name="{{ task.nom|lower }}">
+                  <!-- Checkbox -->
+                  <td style="padding-left: 16px;">
+                    <div class="task-check {% if task.status == 'completed' %}done{% endif %}" onclick="toggleStatus(event, {{ task.id }}, {{ project.id }}, '{{ task.status }}')">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                  </td>
+                  <!-- ID -->
+                  <td>
+                    <span class="text-[11px] font-mono font-semibold" style="color: var(--fg-muted);">{{ task.task_id }}</span>
+                  </td>
+                  <!-- Task Name + subtask progress -->
+                  <td>
+                    <div>
+                      <span class="task-name-link" onclick='openEditModal({{ task.id }}, {{ project.id }}, "{{ task.task_id|e }}", {{ task.nom|tojson }}, "{{ task.priorite|default("Moyenne")|e }}", {{ task.duree_estimee_jours or 0 }}, "{{ task.status|e }}", {{ task.sous_taches|default([])|tojson }})'>{{ task.nom }}</span>
+                      {% if task.sous_taches %}
+                      {% set total_st = task.sous_taches|length %}
+                      {% set done_st = [] %}
+                      {% for st in task.sous_taches %}{% if st.get('completed') %}{% if done_st.append(1) %}{% endif %}{% endif %}{% endfor %}
+                      <div class="flex items-center gap-2 mt-1.5">
+                        <div class="progress-bar" style="width: 60px; height: 4px;">
+                          <div class="progress-fill" style="width: {% if total_st > 0 %}{{ (done_st|length * 100 / total_st)|round|int }}{% else %}0{% endif %}%;"></div>
+                        </div>
+                        <span class="text-[10px] font-medium" style="color: var(--fg-muted);">{{ done_st|length }}/{{ total_st }}</span>
+                      </div>
+                      {% endif %}
+                    </div>
+                  </td>
+                  <!-- Status -->
+                  <td>
+                    <span class="status-pill {% if task.status == 'completed' %}status-done{% elif task.status == 'in_progress' %}status-progress{% else %}status-todo{% endif %}">
+                      <span class="dot"></span>
+                      {% if task.status == 'completed' %}Done{% elif task.status == 'in_progress' %}In Progress{% else %}To Do{% endif %}
+                    </span>
+                  </td>
+                  <!-- Priority -->
+                  <td>
+                    {% if task.priorite %}
+                    <span class="badge {% if task.priorite == 'Haute' %}priority-high{% elif task.priorite == 'Basse' %}priority-low{% else %}priority-med{% endif %}">
+                      {% if task.priorite == 'Haute' %}🔴{% elif task.priorite == 'Basse' %}🟢{% else %}🟡{% endif %}
+                      {{ task.priorite }}
+                    </span>
+                    {% else %}
+                    <span style="color: var(--fg-muted);">—</span>
+                    {% endif %}
+                  </td>
+                  <!-- Assignee -->
+                  <td>
+                    {% if task.assigned_employee %}
+                    <div class="flex items-center gap-2">
+                      {% set colors = ['#7c3aed','#10b981','#f59e0b','#3b82f6','#ef4444','#ec4899'] %}
+                      <div class="avatar" style="background: {{ colors[task.assigned_employee.id % 6] }};">
+                        {{ task.assigned_employee.full_name[0]|upper }}
+                      </div>
+                      <div>
+                        <span class="text-[12px] font-medium" style="color: var(--fg);">{{ task.assigned_employee.full_name }}</span>
+                        {% if task.match_score is not none %}
+                        <div class="text-[10px] font-semibold" style="color: {% if task.match_score >= 70 %}var(--success){% elif task.match_score >= 40 %}var(--warning){% else %}var(--fg-muted){% endif %};">
+                          {{ task.match_score|round|int }}% match
+                        </div>
+                        {% endif %}
+                      </div>
+                    </div>
+                    {% else %}
+                    <span class="text-[12px]" style="color: var(--fg-muted);">Unassigned</span>
+                    {% endif %}
+                  </td>
+                  <!-- Days -->
+                  <td>
+                    <span class="text-[12px] font-semibold" style="color: var(--fg);">{{ task.duree_estimee_jours or '—' }}{% if task.duree_estimee_jours %}<span style="color:var(--fg-muted);font-weight:400;"> d</span>{% endif %}</span>
+                  </td>
+                  <!-- Skills -->
+                  <td>
+                    {% set skills = task.get_required_skills() %}
+                    {% if skills %}
+                      {% for s in skills[:2] %}
+                      <span class="skill-tag">{{ s }}</span>
+                      {% endfor %}
+                      {% if skills|length > 2 %}
+                      <span class="skill-tag" style="background: var(--border); color: var(--fg-muted);">+{{ skills|length - 2 }}</span>
+                      {% endif %}
+                    {% else %}
+                    <span style="color: var(--fg-muted); font-size: 12px;">—</span>
+                    {% endif %}
+                  </td>
+                  <!-- Actions -->
+                  <td>
+                    <button class="btn-sm" style="background: transparent; color: var(--fg-muted); padding: 4px 6px;" onclick='openEditModal({{ task.id }}, {{ project.id }}, "{{ task.task_id|e }}", {{ task.nom|tojson }}, "{{ task.priorite|default("Moyenne")|e }}", {{ task.duree_estimee_jours or 0 }}, "{{ task.status|e }}", {{ task.sous_taches|default([])|tojson }})' title="Edit task">
+                      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          {% else %}
+          <!-- Empty state -->
+          <div class="text-center py-16 px-5">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style="background: var(--primary-light);">
+              <svg class="w-8 h-8" style="color: var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              </svg>
+            </div>
+            <h3 class="text-[15px] font-bold mb-1" style="color: var(--fg);">No tasks yet</h3>
+            <p class="text-[13px]" style="color: var(--fg-muted);">Tasks will appear once the project specs are analyzed by AI.</p>
+          </div>
+          {% endif %}
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- MODAL: Edit Task                               -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div id="editTaskModal" class="modal-backdrop fixed inset-0 z-[100] hidden items-center justify-center p-4" onclick="if(event.target===this)closeEditModal()">
+    <div class="w-full max-w-2xl rounded-3xl p-0 max-h-[90vh] overflow-y-auto" style="background: var(--bg-card); border: 1px solid var(--border); box-shadow: 0 32px 64px rgba(0,0,0,0.2);">
+      
+      <!-- Modal header -->
+      <div class="flex items-center justify-between px-6 py-4" style="border-bottom: 1px solid var(--border);">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center" style="background: var(--primary-light);">
+            <svg class="w-4 h-4" style="color: var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </div>
+          <div>
+            <h3 class="text-[14px] font-bold" style="color: var(--fg);">Edit Task</h3>
+            <span id="editTaskId" class="text-[11px] font-mono" style="color: var(--fg-muted);"></span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="deleteTask()" class="w-8 h-8 rounded-xl flex items-center justify-center" style="color: var(--danger); background: var(--danger-light);" title="Delete task">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+          <button onclick="closeEditModal()" class="w-8 h-8 rounded-xl flex items-center justify-center" style="color: var(--fg-muted); background: var(--bg-card-alt);">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="p-6 space-y-4">
+        <!-- Task name -->
+        <div>
+          <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg-secondary);">Task Name</label>
+          <input type="text" id="editNom" class="input-field" />
+        </div>
+
+        <!-- Row: Priority, Duration, Status -->
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg-secondary);">Priority</label>
+            <select id="editPriorite" class="input-field">
+              <option value="Haute">🔴 Haute</option>
+              <option value="Moyenne">🟡 Moyenne</option>
+              <option value="Basse">🟢 Basse</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg-secondary);">Duration (days)</label>
+            <input type="number" id="editDuree" class="input-field" min="0" />
+          </div>
+          <div>
+            <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg-secondary);">Status</label>
+            <select id="editStatus" class="input-field">
+              <option value="not started">To Do</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Done</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Assign employee -->
+        <div>
+          <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg-secondary);">Assign To</label>
+          <div class="flex gap-2">
+            <select id="editAssignee" class="input-field flex-1">
+              <option value="">— Unassigned —</option>
+              {% for emp in employees %}
+              <option value="{{ emp.id }}">{{ emp.full_name }}</option>
+              {% endfor %}
+            </select>
+            <button onclick="assignEmployee()" class="btn-sm" style="background: var(--primary); color: #fff; border-radius: 10px; padding: 8px 16px;">Assign</button>
+          </div>
+        </div>
+
+        <!-- Sub-tasks as checklist -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-[12px] font-semibold" style="color: var(--fg-secondary);">Sub-tasks</label>
+            <span id="stProgress" class="text-[11px] font-medium" style="color: var(--fg-muted);"></span>
+          </div>
+          <div id="stProgressBar" class="progress-bar mb-3" style="height: 4px; display: none;">
+            <div id="stProgressFill" class="progress-fill"></div>
+          </div>
+          <div id="subtasksContainer" class="space-y-1.5 max-h-[280px] overflow-y-auto pr-1"></div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-3 pt-4" style="border-top: 1px solid var(--border);">
+          <button onclick="saveTask()" class="btn-primary flex-1 justify-center">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Save Changes
+          </button>
+          <button onclick="closeEditModal()" class="btn-ghost flex-1 text-center justify-center" style="display: flex; align-items: center;">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden forms -->
+  <form id="deleteTaskForm" method="POST" style="display:none;"></form>
+  <form id="assignForm" method="POST" style="display:none;">
+    <input type="hidden" id="assignEmployeeId" name="employee_id" />
+  </form>
+  <form id="statusForm" method="POST" style="display:none;">
+    <input type="hidden" id="statusValue" name="status" />
+  </form>
+
+  <!-- ═══════ SCRIPTS ═══════ -->
+  <script>
+    /* ── Deliverables toggle ── */
+    function toggleDeliverables() {
+      var content = document.getElementById('delivContent');
+      var btn = document.getElementById('delivToggleBtn');
+      if (content.style.display === 'none') {
+        content.style.display = 'block';
+        btn.style.transform = 'rotate(180deg)';
+      } else {
+        content.style.display = 'none';
+        btn.style.transform = 'rotate(0deg)';
+      }
+    }
+
+    /* ── Theme ── */
+    function updateThemeIcons() {
+      var d = document.documentElement.classList.contains('dark');
+      document.getElementById('sunIcon').style.display = d ? 'none' : 'block';
+      document.getElementById('moonIcon').style.display = d ? 'block' : 'none';
+    }
+    updateThemeIcons();
+    function toggleTheme() {
+      var d = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme', d ? 'dark' : 'light');
+      updateThemeIcons();
+    }
+
+    /* ── Filters ── */
+    var activeFilter = '';
+
+    function filterByStatus(status, btn) {
+      activeFilter = status;
+      document.querySelectorAll('.filter-tab').forEach(function(t) { t.classList.remove('active'); });
+      if (btn) btn.classList.add('active');
+      applyFilters();
+    }
+
+    function filterTasks(q) { applyFilters(q); }
+
+    function applyFilters(q) {
+      q = (q || document.getElementById('searchInput').value || '').toLowerCase();
+      document.querySelectorAll('#tasksTable tbody tr').forEach(function(row) {
+        var s = row.dataset.status;
+        var n = row.dataset.name;
+        var matchStatus = !activeFilter || s === activeFilter;
+        var matchSearch = !q || n.indexOf(q) !== -1;
+        row.style.display = (matchStatus && matchSearch) ? '' : 'none';
+      });
+    }
+
+    /* ── Toggle status via checkbox ── */
+    function toggleStatus(e, taskId, projectId, current) {
+      e.stopPropagation();
+      var newStatus = current === 'completed' ? 'not started' : 'completed';
+      var form = document.getElementById('statusForm');
+      document.getElementById('statusValue').value = newStatus;
+      form.action = '/manager/project/' + projectId + '/task/' + taskId + '/status';
+      form.submit();
+    }
+
+    /* ── Edit Modal ── */
+    var currentTask = {};
+
+    function openEditModal(id, projectId, taskId, nom, priorite, duree, status, sousTaches) {
+      currentTask = {
+        id: id, projectId: projectId, taskId: taskId, nom: nom,
+        priorite: priorite, duree: duree, status: status,
+        sousTaches: JSON.parse(JSON.stringify(sousTaches || []))
+      };
+
+      document.getElementById('editTaskId').textContent = taskId;
+      document.getElementById('editNom').value = nom;
+      document.getElementById('editPriorite').value = priorite || 'Moyenne';
+      document.getElementById('editDuree').value = duree;
+      document.getElementById('editStatus').value = status;
+
+      renderSubtasks();
+
+      document.getElementById('editTaskModal').classList.remove('hidden');
+      document.getElementById('editTaskModal').classList.add('flex');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function renderSubtasks() {
+      var container = document.getElementById('subtasksContainer');
+      var progressBar = document.getElementById('stProgressBar');
+      var progressFill = document.getElementById('stProgressFill');
+      var progressText = document.getElementById('stProgress');
+      container.innerHTML = '';
+
+      if (!currentTask.sousTaches || currentTask.sousTaches.length === 0) {
+        container.innerHTML = '<p class="text-[12px] text-center py-4" style="color: var(--fg-muted);">No sub-tasks for this task</p>';
+        progressText.textContent = '';
+        progressBar.style.display = 'none';
+        return;
+      }
+
+      var total = currentTask.sousTaches.length;
+      var doneCount = 0;
+
+      currentTask.sousTaches.forEach(function(st, i) {
+        if (st.completed) doneCount++;
+        var isDone = st.completed ? true : false;
+        var skills = (st.competences_requises || []);
+
+        var div = document.createElement('div');
+        div.style.cssText = 'display:flex; align-items:flex-start; gap:10px; padding:10px 14px; border-radius:12px; border:1px solid var(--border); background:var(--bg-card-alt); transition: all 0.15s; cursor:pointer;';
+        div.onmouseover = function() { this.style.borderColor = 'var(--primary)'; this.style.background = 'var(--primary-light)'; };
+        div.onmouseout = function() { this.style.borderColor = 'var(--border)'; this.style.background = 'var(--bg-card-alt)'; };
+
+        // Checkbox
+        var checkDiv = document.createElement('div');
+        checkDiv.className = 'st-check' + (isDone ? ' done' : '');
+        checkDiv.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+        checkDiv.dataset.idx = i;
+        checkDiv.onclick = function(e) {
+          e.stopPropagation();
+          var idx = parseInt(this.dataset.idx);
+          currentTask.sousTaches[idx].completed = !currentTask.sousTaches[idx].completed;
+          renderSubtasks();
+        };
+
+        // Content area
+        var contentDiv = document.createElement('div');
+        contentDiv.style.cssText = 'flex:1; min-width:0;';
+
+        // Sub-task name
+        var nameDiv = document.createElement('div');
+        nameDiv.className = isDone ? 'st-text-done' : '';
+        nameDiv.style.cssText = 'font-size:13px; font-weight:500; color:var(--fg);';
+        nameDiv.textContent = st.nom || 'Sub-task ' + (i + 1);
+        contentDiv.appendChild(nameDiv);
+
+        // Bottom row: skills + duration
+        var metaDiv = document.createElement('div');
+        metaDiv.style.cssText = 'display:flex; align-items:center; gap:6px; margin-top:4px; flex-wrap:wrap;';
+
+        if (st.duree_estimee_jours) {
+          var durSpan = document.createElement('span');
+          durSpan.style.cssText = 'font-size:10px; color:var(--fg-muted); display:inline-flex; align-items:center; gap:3px;';
+          durSpan.textContent = '⏱ ' + st.duree_estimee_jours + 'd';
+          metaDiv.appendChild(durSpan);
+        }
+
+        skills.forEach(function(s) {
+          if (s) {
+            var tag = document.createElement('span');
+            tag.className = 'skill-tag';
+            tag.style.cssText = 'font-size:9px; padding:1px 6px; margin:0;';
+            tag.textContent = s;
+            metaDiv.appendChild(tag);
+          }
+        });
+
+        if (metaDiv.children.length > 0) contentDiv.appendChild(metaDiv);
+
+        div.appendChild(checkDiv);
+        div.appendChild(contentDiv);
+
+        // Click anywhere on the row to toggle
+        div.onclick = function() {
+          checkDiv.click();
+        };
+
+        container.appendChild(div);
+      });
+
+      // Update progress
+      var pct = total > 0 ? Math.round((doneCount / total) * 100) : 0;
+      progressText.textContent = doneCount + ' of ' + total + ' done';
+      progressBar.style.display = 'block';
+      progressFill.style.width = pct + '%';
+    }
+
+    function closeEditModal() {
+      document.getElementById('editTaskModal').classList.add('hidden');
+      document.getElementById('editTaskModal').classList.remove('flex');
+      document.body.style.overflow = '';
+    }
+
+    function saveTask() {
+      var payload = {
+        nom: document.getElementById('editNom').value,
+        priorite: document.getElementById('editPriorite').value,
+        duree_estimee_jours: parseInt(document.getElementById('editDuree').value),
+        status: document.getElementById('editStatus').value,
+        sous_taches: currentTask.sousTaches || []
+      };
+
+      fetch('/manager/project/' + currentTask.projectId + '/task/' + currentTask.id + '/edit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success) { window.location.reload(); }
+        else { alert('Error: ' + data.error); }
+      })
+      .catch(function(err) { alert('Error saving task'); });
+    }
+
+    function deleteTask() {
+      if (!confirm('Delete this task?')) return;
+      var form = document.getElementById('deleteTaskForm');
+      form.action = '/manager/project/' + currentTask.projectId + '/task/' + currentTask.id + '/delete';
+      form.submit();
+    }
+
+    function assignEmployee() {
+      var empId = document.getElementById('editAssignee').value;
+      var form = document.getElementById('assignForm');
+      document.getElementById('assignEmployeeId').value = empId;
+      form.action = '/manager/project/' + currentTask.projectId + '/task/' + currentTask.id + '/assign';
+      form.submit();
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeEditModal();
+    });
+  </script>
+</body>
+</html>

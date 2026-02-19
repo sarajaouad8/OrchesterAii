@@ -1,0 +1,58 @@
+<!-- Task Card Partial (included inside kanban columns) -->
+<div class="task-card"
+  onclick='openEditModal(
+    {{ task.id }},
+    {{ project.id }},
+    "{{ task.task_id|e }}",
+    "{{ task.nom|replace("\"","\\\"") }}",
+    "{{ task.priorite|e }}",
+    {{ task.duree_estimee_jours or 0 }},
+    "{{ task.status|e }}",
+    {{ task.sous_taches|default([])|tojson }}
+  )'>
+
+  <!-- Header: task_id badge + priority -->
+  <div class="flex items-center justify-between mb-3">
+    <span class="badge" style="background: var(--primary-light); color: var(--primary);">{{ task.task_id }}</span>
+    <span class="badge"
+      style="{% if task.priorite == 'Haute' %}background: var(--danger-light); color: var(--danger);
+      {% elif task.priorite == 'Basse' %}background: var(--success-light); color: var(--success);
+      {% else %}background: var(--warning-light); color: var(--warning);{% endif %}">
+      {{ task.priorite or 'N/A' }}
+    </span>
+  </div>
+
+  <!-- Task Name -->
+  <h4 class="text-[13px] font-semibold mb-2 leading-snug" style="color: var(--fg);">{{ task.nom }}</h4>
+
+  <!-- Skill tags from sub-tasks -->
+  {% set skills = task.get_required_skills() %}
+  {% if skills %}
+  <div class="mb-3">
+    {% for skill in skills[:5] %}
+    <span class="skill-tag">{{ skill }}</span>
+    {% endfor %}
+    {% if skills|length > 5 %}
+    <span class="skill-tag" style="background: var(--border); color: var(--fg-muted);">+{{ skills|length - 5 }}</span>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Footer: duration + assignee -->
+  <div class="flex items-center justify-between mt-2 pt-2" style="border-top: 1px solid var(--border);">
+    <div class="flex items-center gap-1 text-[11px]" style="color: var(--fg-muted);">
+      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      {{ task.duree_estimee_jours or 0 }}d
+    </div>
+    {% if task.assigned_employee %}
+    <div class="flex items-center gap-1.5">
+      <div class="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white" style="background: var(--primary);">
+        {{ task.assigned_employee.full_name[0].upper() }}
+      </div>
+      <span class="text-[11px] font-medium" style="color: var(--fg-secondary);">{{ task.assigned_employee.full_name.split(' ')[0] }}</span>
+    </div>
+    {% else %}
+    <span class="text-[11px]" style="color: var(--fg-muted);">Unassigned</span>
+    {% endif %}
+  </div>
+</div>

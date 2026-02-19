@@ -299,7 +299,7 @@
         <!-- ─── PROJECTS GALLERY ─── -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {% for project in projects %}
-            <div class="project-card glass-card p-5 cursor-pointer status-{{ project.status }}">
+            <a href="{{ url_for('manager.project_detail', project_id=project.id) }}" class="project-card glass-card p-5 cursor-pointer status-{{ project.status }} block" style="text-decoration: none;">
               <!-- Status Badge -->
               <div class="flex items-center justify-between mb-4">
                 <span class="badge" style="
@@ -313,10 +313,11 @@
                   {{ project.status.replace('_', ' ').title() }}
                 </span>
                 <!-- Delete -->
-                <form method="POST" action="{{ url_for('manager.delete_project', project_id=project.id) }}" onsubmit="return confirm('Delete this project?')">
-                  <button type="submit" class="w-7 h-7 rounded-lg flex items-center justify-center transition-colors" style="color: var(--fg-muted);"
+                <form method="POST" action="{{ url_for('manager.delete_project', project_id=project.id) }}" onsubmit="event.stopPropagation(); return confirm('Delete this project?')" onclick="event.preventDefault(); event.stopPropagation(); this.submit();">
+                  <button type="button" class="w-7 h-7 rounded-lg flex items-center justify-center transition-colors" style="color: var(--fg-muted);"
                     onmouseover="this.style.background='var(--danger-light)';this.style.color='var(--danger)'"
-                    onmouseout="this.style.background='transparent';this.style.color='var(--fg-muted)'">
+                    onmouseout="this.style.background='transparent';this.style.color='var(--fg-muted)'"
+                    onclick="event.preventDefault(); event.stopPropagation(); if(confirm('Delete this project?')) this.closest('form').submit();">
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                   </button>
                 </form>
@@ -328,21 +329,23 @@
               </div>
 
               <!-- Name & Date -->
-              <h3 class="text-[15px] font-bold mb-1" style="color: var(--fg);">{{ project.name }}</h3>
+              <h3 class="text-[15px] font-bold mb-1" style="color: var(--fg);">{{ project.nom_projet or project.name }}</h3>
               <p class="text-[12px]" style="color: var(--fg-muted);">Created {{ project.created_at.strftime('%b %d, %Y') }}</p>
 
-              <!-- Files Indicator -->
+              <!-- Tasks indicator -->
               <div class="flex items-center gap-3 mt-4 pt-4" style="border-top: 1px solid var(--border);">
-                <div class="flex items-center gap-1.5 text-[11px]" style="color: {{ 'var(--success)' if project.cv_path else 'var(--fg-muted)' }};">
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                  CV {{ '✓' if project.cv_path else '—' }}
-                </div>
                 <div class="flex items-center gap-1.5 text-[11px]" style="color: {{ 'var(--success)' if project.specs_path else 'var(--fg-muted)' }};">
-                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                   Specs {{ '✓' if project.specs_path else '—' }}
                 </div>
+                <div class="flex items-center gap-1.5 text-[11px]" style="color: {{ 'var(--success)' if project.taches_techniques else 'var(--fg-muted)' }};">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                  </svg>
+                  {% if project.taches_techniques %}{{ project.taches_techniques|length }} tasks{% else %}No tasks{% endif %}
+                </div>
               </div>
-            </div>
+            </a>
           {% endfor %}
 
           <!-- Empty State or Add New Card -->
@@ -373,67 +376,39 @@
       <div class="flex items-center justify-between mb-8">
         <div>
           <h3 class="text-xl font-bold" style="color: var(--fg);">New Project</h3>
-          <p class="text-[13px] mt-1" style="color: var(--fg-muted);">Upload CV and project specs to analyze</p>
+          <p class="text-[13px] mt-1" style="color: var(--fg-muted);">Drop your project specs PDF — AI will analyze everything</p>
         </div>
         <button onclick="closeModal('addProjectModal')" class="w-10 h-10 rounded-xl flex items-center justify-center" style="color: var(--fg-muted); background: var(--bg-card-alt);">
           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
 
-      <form method="POST" action="{{ url_for('manager.add_project') }}" enctype="multipart/form-data" class="space-y-6">
-        <!-- Project Name -->
+      <form id="uploadForm" method="POST" action="{{ url_for('manager.add_project') }}" enctype="multipart/form-data" class="space-y-6">
+        <!-- Project Specs Upload -->
         <div>
-          <label class="block text-[13px] font-semibold mb-2" style="color: var(--fg);">Project Name <span style="color: var(--danger);">*</span></label>
-          <input type="text" name="name" required placeholder="e.g. OrchestrAi Frontend Developer" class="input-field" />
-        </div>
-
-        <!-- Two Upload Zones -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <!-- CV Upload -->
-          <div>
-            <label class="block text-[13px] font-semibold mb-2" style="color: var(--fg);">
-              <span class="flex items-center gap-2">
-                <svg class="w-4 h-4" style="color: var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                Upload CV
-              </span>
-            </label>
-            <label class="drop-zone flex cursor-pointer flex-col items-center gap-2 rounded-xl p-4 transition-all" style="border: 2px dashed var(--border);"
-              ondragover="this.classList.add('dragover'); event.preventDefault()"
-              ondragleave="this.classList.remove('dragover')">
-              <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: var(--primary-light);">
-                <svg class="w-5 h-5" style="color: var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              </div>
-              <span class="text-[12px] font-medium text-center" style="color: var(--fg-secondary);">Drop or click</span>
-              <span class="text-[10px]" style="color: var(--fg-muted);">PDF, DOCX</span>
-              <input type="file" name="cv_file" accept=".pdf,.docx,.doc" class="hidden" onchange="this.closest('label').querySelector('span').textContent = this.files[0]?.name || 'Drop or click'" />
-            </label>
-          </div>
-
-          <!-- Specs Upload -->
-          <div>
-            <label class="block text-[13px] font-semibold mb-2" style="color: var(--fg);">
-              <span class="flex items-center gap-2">
-                <svg class="w-4 h-4" style="color: var(--success);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-                Project Specs
-              </span>
-            </label>
-            <label class="drop-zone flex cursor-pointer flex-col items-center gap-2 rounded-xl p-4 transition-all" style="border: 2px dashed var(--border);"
-              ondragover="this.classList.add('dragover'); event.preventDefault()"
-              ondragleave="this.classList.remove('dragover')">
-              <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: var(--success-light);">
-                <svg class="w-5 h-5" style="color: var(--success);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              </div>
-              <span class="text-[12px] font-medium text-center" style="color: var(--fg-secondary);">Drop or click</span>
-              <span class="text-[10px]" style="color: var(--fg-muted);">PDF, DOCX</span>
-              <input type="file" name="specs_file" accept=".pdf,.docx,.doc" class="hidden" onchange="this.closest('label').querySelector('span').textContent = this.files[0]?.name || 'Drop or click'" />
-            </label>
+          <label id="dropZone" class="drop-zone flex cursor-pointer flex-col items-center gap-3 rounded-xl p-10 transition-all" style="border: 2px dashed var(--border);"
+            ondragover="this.classList.add('dragover'); event.preventDefault()"
+            ondragleave="this.classList.remove('dragover')"
+            ondrop="handleDrop(event, this)">
+            <div class="w-16 h-16 rounded-2xl flex items-center justify-center" style="background: var(--primary-light);">
+              <svg class="w-8 h-8" style="color: var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+            </div>
+            <div class="text-center">
+              <span id="dropLabel" class="text-[14px] font-semibold block mb-1" style="color: var(--fg);">Drop your project specs here</span>
+              <span class="text-[12px]" style="color: var(--fg-muted);">or click to browse — PDF only</span>
+            </div>
+            <input type="file" id="specsInput" name="specs_file" accept=".pdf" required class="hidden" onchange="onFileSelected(this)" />
+          </label>
+          <div id="fileInfo" class="hidden mt-3 rounded-xl p-4 flex items-center gap-3" style="background: var(--success-light); border: 1px solid var(--success);">
+            <svg class="w-5 h-5 flex-shrink-0" style="color: var(--success);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span id="fileName" class="text-[13px] font-medium" style="color: var(--success);"></span>
           </div>
         </div>
 
-        <!-- Start Button -->
-        <button type="submit" class="btn-primary w-full justify-center text-[15px] py-4">
-          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-          Start Project
+        <!-- Submit Button -->
+        <button id="submitBtn" type="submit" class="btn-primary w-full justify-center text-[15px] py-4" disabled style="opacity: 0.5; cursor: not-allowed;">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
+          <span id="submitText">Select a PDF first</span>
         </button>
       </form>
     </div>
@@ -466,6 +441,38 @@
       document.getElementById(id).classList.remove('flex');
       document.body.style.overflow = '';
     }
+
+    function onFileSelected(input) {
+      if (input.files.length > 0) {
+        var file = input.files[0];
+        document.getElementById('dropLabel').textContent = file.name;
+        document.getElementById('fileName').textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+        document.getElementById('fileInfo').classList.remove('hidden');
+        var btn = document.getElementById('submitBtn');
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+        document.getElementById('submitText').textContent = 'Analyze & Create Project';
+      }
+    }
+
+    function handleDrop(e, zone) {
+      e.preventDefault();
+      zone.classList.remove('dragover');
+      var files = e.dataTransfer.files;
+      if (files.length > 0 && files[0].name.endsWith('.pdf')) {
+        document.getElementById('specsInput').files = files;
+        onFileSelected(document.getElementById('specsInput'));
+      }
+    }
+
+    // Loading state on submit
+    document.getElementById('uploadForm').addEventListener('submit', function() {
+      var btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.style.opacity = '0.6';
+      document.getElementById('submitText').textContent = 'Analyzing with AI... please wait';
+    });
 
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') closeModal('addProjectModal');
