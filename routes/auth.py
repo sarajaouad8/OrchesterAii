@@ -10,31 +10,26 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        role = request.form.get('role')  # 'manager' or 'employee'
 
         user = User.query.filter_by(username=username).first()
 
         if user and user.check_password(password):
-            if user.role != role:
-                flash('Incorrect role selected for this account.', 'error')
-                return render_template('login.html')
+            # Clear any old session data completely
+            session.clear()
+
+            # Store user info in session
+            session['user_id'] = user.id
+            session['username'] = user.username
+            session['role'] = user.role
+            session.permanent = True
+
+            flash(f'Welcome back, {user.username}!', 'success')
+
+            # Redirect based on role stored in the database
+            if user.role == 'manager':
+                return redirect(url_for('manager.dashboard'))
             else:
-                # Clear any old session data completely
-                session.clear()
-                
-                # Store user info in session
-                session['user_id'] = user.id
-                session['username'] = user.username
-                session['role'] = user.role
-                session.permanent = True
-
-                flash(f'Welcome back, {user.username}!', 'success')
-
-                # Redirect based on role
-                if user.role == 'manager':
-                    return redirect(url_for('manager.dashboard'))
-                else:
-                    return redirect(url_for('employee.dashboard'))
+                return redirect(url_for('employee.dashboard'))
         else:
             flash('Invalid username or password.', 'error')
 
