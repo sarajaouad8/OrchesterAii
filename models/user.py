@@ -30,6 +30,7 @@ class User(db.Model):
     # Full CV data (for reference)
     cv_data = db.Column(db.JSON, nullable=True)  # Store complete CV analysis
     cv_file = db.Column(db.String(255), nullable=True)
+    profile_pic = db.Column(db.String(255), nullable=True)  # Profile picture filename
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

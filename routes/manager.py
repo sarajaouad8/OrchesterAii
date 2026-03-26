@@ -7,11 +7,21 @@ from flask import Blueprint, request, render_template, redirect, url_for, flash,
 from werkzeug.utils import secure_filename
 from models import db
 from models.user import User
-from models.project import Project, Task
+from models.project import Project, Task, TaskCollaborator
 from utils.decorators import manager_required
-from utils.matching import auto_match_tasks
+from utils.matching import auto_match_tasks, auto_reassign_employee
 
 manager_bp = Blueprint('manager', __name__, url_prefix='/manager')
+
+
+@manager_bp.app_context_processor
+def inject_current_manager():
+    """Inject the current manager's User object into all templates."""
+    user_id = session.get('user_id')
+    if user_id:
+        mgr = User.query.get(user_id)
+        return dict(current_manager=mgr)
+    return dict(current_manager=None)
 
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'doc'}
 ALLOWED_CV_EXTENSIONS = {'pdf'}
@@ -95,92 +105,107 @@ def dashboard():
 @manager_required
 def add_employee():
     """
-    New workflow: Manager uploads CV only.
+    New workflow: Manager uploads one or multiple CVs.
+    For each CV:
     1. Save CV file
     2. Extract text from PDF
     3. Send to n8n for AI analysis
     4. n8n will call back /api/employee/create with the analyzed data
     """
-    if 'cv_file' not in request.files:
-        flash('Please upload a CV file.', 'error')
+    cv_files = request.files.getlist('cv_files')
+    
+    if not cv_files or all(f.filename == '' for f in cv_files):
+        flash('Please upload at least one CV file.', 'error')
         return redirect(url_for('manager.employees'))
     
-    cv_file = request.files['cv_file']
+    # Filter valid files
+    valid_files = [f for f in cv_files if f and f.filename != '' and allowed_cv_file(f.filename)]
+    skipped = len(cv_files) - len(valid_files)
     
-    if cv_file.filename == '':
-        flash('No file selected.', 'error')
+    if not valid_files:
+        flash('No valid PDF files found. Only PDF files are allowed.', 'error')
         return redirect(url_for('manager.employees'))
     
-    if not allowed_cv_file(cv_file.filename):
-        flash('Only PDF files are allowed for CV upload.', 'error')
-        return redirect(url_for('manager.employees'))
+    if skipped > 0:
+        flash(f'⚠️ {skipped} non-PDF file(s) were skipped.', 'warning')
     
     # Create CV upload directory if it doesn't exist
     cv_folder = current_app.config.get('CV_UPLOAD_FOLDER', os.path.join(current_app.root_path, 'uploads', 'cvs'))
     os.makedirs(cv_folder, exist_ok=True)
     
-    # Save CV file with unique name
-    filename = secure_filename(cv_file.filename)
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    unique_filename = f"{timestamp}_{filename}"
-    cv_path = os.path.join(cv_folder, unique_filename)
-    cv_file.save(cv_path)
-    
-    # Extract text from PDF
-    cv_text = extract_text_from_pdf(cv_path)
-    
-    if not cv_text:
-        flash('Could not extract text from the CV. Please ensure the PDF is readable.', 'error')
-        os.remove(cv_path)  # Clean up the file
-        return redirect(url_for('manager.employees'))
-    
-    # Send to n8n for analysis with retry logic
+    # n8n URLs
     n8n_url = current_app.config.get('N8N_WEBHOOK_URL')
     backup_urls = current_app.config.get('N8N_BACKUP_URLS', [])
-    
-    # Try primary URL first, then backups
     urls_to_try = [n8n_url] + backup_urls if backup_urls else [n8n_url]
-    success = False
     
-    for attempt, url in enumerate(urls_to_try, 1):
-        if not url:
+    success_count = 0
+    fail_count = 0
+    
+    for cv_file in valid_files:
+        # Save CV file with unique name
+        filename = secure_filename(cv_file.filename)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+        unique_filename = f"{timestamp}_{filename}"
+        cv_path = os.path.join(cv_folder, unique_filename)
+        cv_file.save(cv_path)
+        
+        # Extract text from PDF
+        cv_text = extract_text_from_pdf(cv_path)
+        
+        if not cv_text:
+            current_app.logger.warning(f"❌ Could not extract text from {filename}")
+            flash(f'⚠️ Could not extract text from {filename}. Skipping.', 'warning')
+            os.remove(cv_path)
+            fail_count += 1
             continue
-            
-        try:
-            current_app.logger.info(f"🔄 Attempt {attempt}: Trying {url}")
-            
-            # Use public URL from config for callback
-            public_url = current_app.config.get('PUBLIC_URL', 'http://localhost:5000')
-            callback_url = f"{public_url}/manager/api/employee/create"
-            
-            current_app.logger.info(f"📡 Callback URL sent to n8n: {callback_url}")
-            
-            response = requests.post(
-                url,
-                json={
-                    'cv_text': cv_text,
-                    'cv_filename': unique_filename,
-                    'callback_url': callback_url,
-                    'retry_count': attempt
-                },
-                timeout=10  # Shorter timeout for faster failover
-            )
-            
-            if response.status_code == 200:
-                flash('✅ CV uploaded successfully! The AI is analyzing it. The employee will be added shortly.', 'success')
-                success = True
-                break
-            else:
-                current_app.logger.warning(f"❌ Attempt {attempt} failed: {response.status_code}")
+        
+        # Send to n8n for analysis with retry logic
+        sent = False
+        for attempt, url in enumerate(urls_to_try, 1):
+            if not url:
+                continue
+            try:
+                current_app.logger.info(f"🔄 [{filename}] Attempt {attempt}: Trying {url}")
                 
-        except requests.exceptions.RequestException as e:
-            current_app.logger.error(f"❌ Attempt {attempt} connection error: {e}")
-            if attempt < len(urls_to_try):
-                continue  # Try next URL
+                public_url = current_app.config.get('PUBLIC_URL', 'http://localhost:5000')
+                callback_url = f"{public_url}/manager/api/employee/create"
+                
+                response = requests.post(
+                    url,
+                    json={
+                        'cv_text': cv_text,
+                        'cv_filename': unique_filename,
+                        'callback_url': callback_url,
+                        'retry_count': attempt
+                    },
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    success_count += 1
+                    sent = True
+                    break
+                else:
+                    current_app.logger.warning(f"❌ [{filename}] Attempt {attempt} failed: {response.status_code}")
+            except requests.exceptions.RequestException as e:
+                current_app.logger.error(f"❌ [{filename}] Attempt {attempt} connection error: {e}")
+                continue
+        
+        if not sent:
+            fail_count += 1
+            current_app.logger.error(f"❌ All n8n attempts failed for {filename}")
     
-    if not success:
-        flash(f'❌ All n8n connections failed. CV text extracted: {cv_text[:200]}...', 'error')
-        flash(f'🔗 Tried: {n8n_url}', 'warning')
+    # Summary flash messages
+    total = len(valid_files)
+    if success_count == total:
+        if total == 1:
+            flash('✅ CV uploaded successfully! The AI is analyzing it. The employee will be added shortly.', 'success')
+        else:
+            flash(f'✅ All {success_count} CVs uploaded successfully! The AI is analyzing them. Employees will be added shortly.', 'success')
+    elif success_count > 0:
+        flash(f'⚠️ {success_count}/{total} CVs sent to AI successfully. {fail_count} failed.', 'warning')
+    else:
+        flash(f'❌ All {total} CV uploads failed to reach n8n.', 'error')
         flash('💡 Solutions: 1) Ask friend to restart ngrok, 2) Get new URL, 3) Use test endpoint', 'warning')
     
     return redirect(url_for('manager.employees'))
@@ -247,6 +272,55 @@ def test_create_employee():
     db.session.commit()
     
     flash(f'✅ Test employee created! Username: {username}, Password: {password}', 'success')
+    return redirect(url_for('manager.employees'))
+
+
+@manager_bp.route('/test/create-hind')
+@manager_required
+def create_hind_employee():
+    """
+    Convenience route to create a demo employee named 'hind'
+    so you can quickly log in and test the employee dashboard.
+    """
+    name = 'hind'
+    email = 'hind@example.com'
+    username = 'hind'
+    fixed_password = 'hind1234'  # demo password so you can log in
+
+    # Try to find any existing "hind" user (by username, email or name)
+    existing = User.query.filter(
+        (User.username == username) |
+        (User.email == email) |
+        (User.name.ilike('hind%'))
+    ).first()
+
+    if existing:
+        # Ensure role + password are as expected
+        existing.role = 'employee'
+        existing.status = 'active'
+        existing.set_password(fixed_password)
+        db.session.commit()
+        flash(
+            f'Employee "hind" already existed. Username: {existing.username}, Password reset to: {fixed_password}',
+            'info'
+        )
+        return redirect(url_for('manager.employees'))
+
+    employee = User(
+        username=username,
+        name=name,
+        email=email,
+        role='employee',
+        status='active',
+        technical_skills={"manual_entry": ["Python", "Flask", "SQL"]},
+        cv_file='hind_demo.pdf'
+    )
+    employee.set_password(fixed_password)
+
+    db.session.add(employee)
+    db.session.commit()
+
+    flash(f'✅ Employee "hind" created! Username: {username}, Password: {fixed_password}', 'success')
     return redirect(url_for('manager.employees'))
 
 
@@ -464,6 +538,34 @@ def api_create_employee():
         db.session.add(employee)
         db.session.commit()
         
+        # ─── Send Welcome Email ───
+        try:
+            from email.mime.text import MIMEText
+            import smtplib
+            import os
+            
+            smtp_server = os.environ.get('SMTP_SERVER', 'smtp.gmail.com')
+            smtp_port = int(os.environ.get('SMTP_PORT', 587))
+            smtp_user = os.environ.get('SMTP_USER')
+            smtp_pass = os.environ.get('SMTP_PASS')
+            
+            if smtp_user and smtp_pass and email:
+                msg = MIMEText(f"Hello {name},\n\nWelcome to OrchestrAi! Your account has been created.\n\nUsername: {username}\nPassword: {password}\n\nPlease log in and change your password.\n\nBest,\nOrchestrAi Team")
+                msg['Subject'] = 'Welcome to OrchestrAi'
+                msg['From'] = smtp_user
+                msg['To'] = email
+                
+                with smtplib.SMTP(smtp_server, smtp_port) as server:
+                    server.starttls()
+                    server.login(smtp_user, smtp_pass)
+                    server.send_message(msg)
+                current_app.logger.info(f"📧 Welcome email sent to {email}")
+            else:
+                current_app.logger.info(f"📧 [DEV MODE] Welcome email would be sent to {email}.\nUsername: {username}\nPassword: {password}\n(Configure SMTP_USER and SMTP_PASS env vars to send real emails)")
+        except Exception as email_err:
+            current_app.logger.error(f"Failed to send welcome email: {email_err}")
+        
+
         # ─── Return success with credentials ───
         return jsonify({
             'success': True,
@@ -538,6 +640,22 @@ def edit_employee(employee_id):
     if password:
         employee.set_password(password)
 
+    # Handle profile picture upload
+    if 'profile_pic' in request.files:
+        pic_file = request.files['profile_pic']
+        if pic_file and pic_file.filename != '':
+            allowed_pic_ext = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+            ext = pic_file.filename.rsplit('.', 1)[1].lower() if '.' in pic_file.filename else ''
+            if ext in allowed_pic_ext:
+                pic_folder = os.path.join(current_app.root_path, 'uploads', 'profile_pics')
+                os.makedirs(pic_folder, exist_ok=True)
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                pic_filename = secure_filename(f"{employee.id}_{timestamp}.{ext}")
+                pic_file.save(os.path.join(pic_folder, pic_filename))
+                employee.profile_pic = pic_filename
+            else:
+                flash('Invalid image format. Use PNG, JPG, GIF, or WebP.', 'error')
+
     db.session.commit()
     flash(f'Employee "{employee.name or employee.username}" updated successfully!', 'success')
     return redirect(url_for('manager.employees'))
@@ -563,6 +681,103 @@ def delete_employee(employee_id):
     db.session.commit()
     flash(f'Employee "{employee.username}" deleted.', 'success')
     return redirect(url_for('manager.employees'))
+
+
+# ─────────────────────────────────────────────
+# Serve Profile Pictures
+# ─────────────────────────────────────────────
+@manager_bp.route('/uploads/profile_pics/<filename>')
+@manager_required
+def profile_pic(filename):
+    pic_folder = os.path.join(current_app.root_path, 'uploads', 'profile_pics')
+    from flask import send_from_directory
+    return send_from_directory(pic_folder, filename)
+
+
+@manager_bp.route('/employees/<int:employee_id>/delete-pic', methods=['POST'])
+@manager_required
+def delete_profile_pic(employee_id):
+    employee = User.query.get_or_404(employee_id)
+    if employee.profile_pic:
+        pic_path = os.path.join(current_app.root_path, 'uploads', 'profile_pics', employee.profile_pic)
+        if os.path.exists(pic_path):
+            os.remove(pic_path)
+        employee.profile_pic = None
+        db.session.commit()
+        flash('Profile picture removed.', 'success')
+    return redirect(url_for('manager.employees'))
+
+
+# ─────────────────────────────────────────────
+# Manager Profile
+# ─────────────────────────────────────────────
+@manager_bp.route('/profile', methods=['GET', 'POST'])
+@manager_required
+def manager_profile():
+    user_id = session.get('user_id')
+    user = User.query.get_or_404(user_id)
+
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip() or None
+        email = request.form.get('email', '').strip() or None
+        phone = request.form.get('phone', '').strip() or None
+        location = request.form.get('location', '').strip() or None
+        headline = request.form.get('professional_headline', '').strip() or None
+
+        # Update password if provided
+        password = request.form.get('password', '').strip()
+        if password:
+            user.set_password(password)
+
+        # Update email (check uniqueness)
+        if email and email != user.email:
+            if User.query.filter(User.email == email, User.id != user.id).first():
+                flash('Email already in use.', 'error')
+                return redirect(url_for('manager.manager_profile'))
+
+        user.name = name
+        user.email = email
+        user.phone = phone
+        user.location = location
+        user.professional_headline = headline
+
+        # Handle profile picture upload
+        if 'profile_pic' in request.files:
+            pic_file = request.files['profile_pic']
+            if pic_file and pic_file.filename != '':
+                allowed_pic_ext = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+                ext = pic_file.filename.rsplit('.', 1)[1].lower() if '.' in pic_file.filename else ''
+                if ext in allowed_pic_ext:
+                    pic_folder = os.path.join(current_app.root_path, 'uploads', 'profile_pics')
+                    os.makedirs(pic_folder, exist_ok=True)
+                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                    pic_filename = secure_filename(f"{user.id}_{timestamp}.{ext}")
+                    pic_file.save(os.path.join(pic_folder, pic_filename))
+                    user.profile_pic = pic_filename
+                else:
+                    flash('Invalid image format. Use PNG, JPG, GIF, or WebP.', 'error')
+
+        db.session.commit()
+        session['username'] = user.name or user.username
+        flash('Profile updated successfully!', 'success')
+        return redirect(url_for('manager.manager_profile'))
+
+    return render_template('manager/profile.html', user=user)
+
+
+@manager_bp.route('/profile/delete-pic', methods=['POST'])
+@manager_required
+def delete_own_pic():
+    user_id = session.get('user_id')
+    user = User.query.get_or_404(user_id)
+    if user.profile_pic:
+        pic_path = os.path.join(current_app.root_path, 'uploads', 'profile_pics', user.profile_pic)
+        if os.path.exists(pic_path):
+            os.remove(pic_path)
+        user.profile_pic = None
+        db.session.commit()
+        flash('Profile picture removed.', 'success')
+    return redirect(url_for('manager.manager_profile'))
 
 
 # ─────────────────────────────────────────────
@@ -931,8 +1146,9 @@ def project_detail(project_id):
     """View project details with task breakdown and employee assignment"""
     project = Project.query.get_or_404(project_id)
     
-    # Get all tasks for this project
+    # Get all tasks for this project, ordered by task_id (T1, T2, ... T10, T11)
     tasks = Task.query.filter_by(project_id=project.id).all()
+    tasks.sort(key=lambda t: (int(''.join(filter(str.isdigit, t.task_id)) or 0), t.task_id))
     
     # Get all employees for assignment dropdown
     employees = User.query.filter_by(role='employee', status='active').all()
@@ -1015,7 +1231,7 @@ def assign_task(project_id, task_id):
 @manager_bp.route('/project/<int:project_id>/task/<int:task_id>/status', methods=['POST'])
 @manager_required  
 def update_task_status(project_id, task_id):
-    """Update task status"""
+    """Update task status — triggers auto-reassignment when completed"""
     task = Task.query.get_or_404(task_id)
     
     if task.project_id != project_id:
@@ -1025,9 +1241,30 @@ def update_task_status(project_id, task_id):
     new_status = request.form.get('status')
     
     if new_status in ['not started', 'in_progress', 'completed']:
+        old_status = task.status
         task.status = new_status
         db.session.commit()
         flash(f'Task status updated to "{new_status}"', 'success')
+        
+        # Auto-reassign when task is completed
+        if new_status == 'completed' and old_status != 'completed':
+            # Try to reassign the primary assignee
+            if task.assigned_employee_id:
+                result = auto_reassign_employee(task.assigned_employee_id, project_id)
+                if result:
+                    flash(
+                        f'🤖 {result["employee_name"]} finished their task and was auto-assigned to help on {result["task_id"]} ({result["task_name"]}) — {result["score"]:.0f}% match',
+                        'success'
+                    )
+            
+            # Try to reassign collaborators too
+            for collab in task.collaborators:
+                result = auto_reassign_employee(collab.employee_id, project_id)
+                if result:
+                    flash(
+                        f'🤖 {result["employee_name"]} was auto-reassigned to help on {result["task_id"]} ({result["task_name"]}) — {result["score"]:.0f}% match',
+                        'success'
+                    )
     else:
         flash('Invalid status', 'error')
     
@@ -1056,6 +1293,8 @@ def edit_task(project_id, task_id):
             task.duree_estimee_jours = int(data['duree_estimee_jours'])
         except (ValueError, TypeError):
             pass
+    
+    old_status = task.status
     if 'status' in data and data['status'] in ['not started', 'in_progress', 'completed']:
         task.status = data['status']
     if 'sous_taches' in data:
@@ -1063,7 +1302,25 @@ def edit_task(project_id, task_id):
     
     db.session.commit()
     
-    return jsonify({'success': True, 'message': 'Task updated'})
+    # Auto-reassign when task is completed via modal
+    reassignment_info = None
+    if data.get('status') == 'completed' and old_status != 'completed':
+        if task.assigned_employee_id:
+            reassignment_info = auto_reassign_employee(task.assigned_employee_id, project_id)
+        for collab in task.collaborators:
+            r = auto_reassign_employee(collab.employee_id, project_id)
+            if r and not reassignment_info:
+                reassignment_info = r
+    
+    # Calculate updated project total days
+    all_tasks = Task.query.filter_by(project_id=project_id).all()
+    total_days = sum(t.duree_estimee_jours or 0 for t in all_tasks)
+    
+    response = {'success': True, 'message': 'Task updated', 'total_days': total_days}
+    if reassignment_info:
+        response['reassignment'] = reassignment_info
+    
+    return jsonify(response)
 
 
 @manager_bp.route('/project/<int:project_id>/task/<int:task_id>/delete', methods=['POST'])
@@ -1080,6 +1337,72 @@ def delete_task(project_id, task_id):
     db.session.delete(task)
     db.session.commit()
     flash(f'Task "{task_name}" deleted.', 'success')
+    
+    return redirect(url_for('manager.project_detail', project_id=project_id))
+
+
+@manager_bp.route('/project/<int:project_id>/task/<int:task_id>/remove-collaborator/<int:collab_id>', methods=['POST'])
+@manager_required
+def remove_collaborator(project_id, task_id, collab_id):
+    """Remove a collaborator from a task"""
+    collab = TaskCollaborator.query.get_or_404(collab_id)
+    
+    if collab.task.project_id != project_id or collab.task_id != task_id:
+        flash('Invalid collaborator', 'error')
+        return redirect(url_for('manager.project_detail', project_id=project_id))
+    
+    emp_name = collab.employee.full_name
+    db.session.delete(collab)
+    db.session.commit()
+    flash(f'Removed {emp_name} from task helpers', 'success')
+    
+    return redirect(url_for('manager.project_detail', project_id=project_id))
+
+
+@manager_bp.route('/project/<int:project_id>/task/<int:task_id>/add-collaborator', methods=['POST'])
+@manager_required
+def add_collaborator(project_id, task_id):
+    """Manually add a collaborator to a task"""
+    task = Task.query.get_or_404(task_id)
+    
+    if task.project_id != project_id:
+        flash('Invalid task', 'error')
+        return redirect(url_for('manager.project_detail', project_id=project_id))
+    
+    employee_id = request.form.get('employee_id')
+    if not employee_id:
+        flash('No employee selected', 'error')
+        return redirect(url_for('manager.project_detail', project_id=project_id))
+    
+    employee = User.query.get(employee_id)
+    if not employee:
+        flash('Employee not found', 'error')
+        return redirect(url_for('manager.project_detail', project_id=project_id))
+    
+    # Check if already primary or collaborator
+    if task.assigned_employee_id == int(employee_id):
+        flash(f'{employee.full_name} is already the primary assignee', 'error')
+        return redirect(url_for('manager.project_detail', project_id=project_id))
+    
+    existing = TaskCollaborator.query.filter_by(task_id=task_id, employee_id=employee_id).first()
+    if existing:
+        flash(f'{employee.full_name} is already helping on this task', 'error')
+        return redirect(url_for('manager.project_detail', project_id=project_id))
+    
+    # Calculate skill match score
+    required_skills = task.get_required_skills()
+    score = employee.calculate_skill_match_score(required_skills) if required_skills else 50
+    
+    collab = TaskCollaborator(
+        task_id=task_id,
+        employee_id=int(employee_id),
+        role='helper',
+        match_score=score,
+        reason=f'Manually added by manager'
+    )
+    db.session.add(collab)
+    db.session.commit()
+    flash(f'✅ {employee.full_name} added as helper on "{task.nom}"', 'success')
     
     return redirect(url_for('manager.project_detail', project_id=project_id))
 

@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Employees - OrchestrAi</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -137,8 +138,8 @@
     <!-- ─────────────────── SIDEBAR ─────────────────── -->
     <aside class="sidebar hidden lg:flex w-[260px] flex-col flex-shrink-0">
       <div class="flex items-center gap-3 px-6 py-6">
-        <div class="flex h-10 w-10 items-center justify-center rounded-xl" style="background: var(--primary);">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        <div class="flex h-10 w-10 items-center justify-center">
+          <img src="{{ url_for('static', filename='images/logo.png') }}" class="w-full h-full object-contain" alt="OrchestrAi">
         </div>
         <div>
           <div class="text-[15px] font-bold" style="color: var(--fg);">OrchestrAi</div>
@@ -161,10 +162,10 @@
           Employees
         </a>
 
-        <div class="text-[10px] font-bold uppercase tracking-widest px-3 mb-2 mt-6" style="color: var(--fg-muted);">Settings</div>
-        <a class="sidebar-link" href="#">
-          <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          Settings
+        <div class="text-[10px] font-bold uppercase tracking-widest px-3 mb-2 mt-6" style="color: var(--fg-muted);">Account</div>
+        <a class="sidebar-link" href="{{ url_for('manager.manager_profile') }}">
+          <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          My Profile
         </a>
       </nav>
 
@@ -193,15 +194,19 @@
             <svg id="sunIcon" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
             <svg id="moonIcon" class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
           </button>
-          <div class="flex items-center gap-2.5 pl-3" style="border-left: 1px solid var(--border);">
+          <a href="{{ url_for('manager.manager_profile') }}" class="flex items-center gap-2.5 pl-3" style="border-left: 1px solid var(--border); text-decoration: none;">
+            {% if current_manager and current_manager.profile_pic %}
+            <img src="{{ url_for('manager.profile_pic', filename=current_manager.profile_pic) }}" class="w-8 h-8 rounded-full object-cover" style="border: 2px solid var(--primary-light);" alt="">
+            {% else %}
             <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style="background: var(--primary);">
               {{ session.get('username', 'M')[0].upper() }}
             </div>
+            {% endif %}
             <div class="hidden sm:block">
               <div class="text-[13px] font-semibold" style="color: var(--fg);">{{ session.get('username', 'Manager') }}</div>
               <div class="text-[11px]" style="color: var(--fg-muted);">Manager</div>
             </div>
-          </div>
+          </a>
           <a href="{{ url_for('auth.logout') }}" class="w-9 h-9 rounded-xl flex items-center justify-center transition-colors" style="border: 1px solid var(--border); color: var(--fg-secondary);" title="Logout">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           </a>
@@ -294,9 +299,13 @@
                     <tr>
                       <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
+                          {% if emp.profile_pic %}
+                          <img src="{{ url_for('manager.profile_pic', filename=emp.profile_pic) }}" alt="{{ emp.name or emp.username }}" class="w-10 h-10 rounded-full object-cover flex-shrink-0" style="border: 2px solid var(--primary-light);">
+                          {% else %}
                           <div class="w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-bold text-white flex-shrink-0" style="background: linear-gradient(135deg, var(--primary), var(--primary-hover));">
                             {{ (emp.name or emp.username)[0].upper() }}
                           </div>
+                          {% endif %}
                           <div>
                             <div class="text-[14px] font-semibold" style="color: var(--fg);">{{ emp.name or emp.username }}</div>
                             <div class="text-[11px]" style="color: var(--fg-muted);">@{{ emp.username }}</div>
@@ -308,16 +317,17 @@
                         {% if emp.competencies %}
                           {% set skills = emp.competencies | replace('[', '') | replace(']', '') | replace('"', '') | replace("'", "") %}
                           {% set skill_list = skills.split(',')[:3] %}
-                          <div class="flex flex-wrap gap-1 max-w-[200px]">
+                          <div class="flex flex-wrap gap-1 max-w-[250px] items-center">
                             {% for skill in skill_list %}
                               <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium" style="background: var(--primary-light); color: var(--primary);">
                                 {{ skill.strip()[:15] }}{% if skill.strip()|length > 15 %}...{% endif %}
                               </span>
                             {% endfor %}
                             {% if skills.split(',')|length > 3 %}
-                              <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium" style="background: var(--fg-muted); color: var(--bg);">
-                                +{{ skills.split(',')|length - 3 }}
-                              </span>
+                              <button onclick="openSkillsModal('{{ emp.name or emp.username }}', {{ emp.technical_skills | tojson | forceescape }})" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold cursor-pointer transition-all" style="background: linear-gradient(135deg, var(--primary), var(--primary-hover)); color: #fff; border: none;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                                See More
+                              </button>
                             {% endif %}
                           </div>
                         {% else %}
@@ -340,7 +350,7 @@
                       </td>
                       <td class="px-6 py-4 text-right">
                         <div class="flex items-center justify-end gap-1">
-                          <button onclick="openEditModal({{ emp.id }}, '{{ emp.username }}', '{{ emp.email or "" }}', '{{ emp.name or "" }}', '{{ emp.status }}')"
+                          <button onclick="openEditModal({{ emp.id }}, '{{ emp.username }}', '{{ emp.email or "" }}', '{{ emp.name or "" }}', '{{ emp.status }}', '{{ emp.profile_pic or "" }}')"
                             class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors" style="color: var(--fg-muted);"
                             onmouseover="this.style.background='var(--primary-light)';this.style.color='var(--primary)'"
                             onmouseout="this.style.background='transparent';this.style.color='var(--fg-muted)'"
@@ -382,32 +392,32 @@
     <div class="w-full max-w-md rounded-2xl p-6" style="background: var(--bg-card); border: 1px solid var(--border); box-shadow: 0 24px 48px rgba(0,0,0,0.15);">
       <div class="flex items-center justify-between mb-6">
         <div>
-          <h3 class="text-[16px] font-bold" style="color: var(--fg);">Add New Employee</h3>
-          <p class="text-[12px] mt-0.5" style="color: var(--fg-muted);">Upload employee CV to auto-extract information</p>
+          <h3 class="text-[16px] font-bold" style="color: var(--fg);">Add New Employee(s)</h3>
+          <p class="text-[12px] mt-0.5" style="color: var(--fg-muted);">Upload one or multiple CVs to auto-extract information</p>
         </div>
         <button onclick="closeModal('addEmployeeModal')" class="w-8 h-8 rounded-lg flex items-center justify-center" style="color: var(--fg-muted);">
           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
-      <form method="POST" action="{{ url_for('manager.add_employee') }}" enctype="multipart/form-data" class="space-y-4">
+      <form method="POST" action="{{ url_for('manager.add_employee') }}" enctype="multipart/form-data" class="space-y-4" onsubmit="showUploadLoading(this)">
         <!-- CV Upload Drop Zone -->
         <div>
-          <label class="block text-[12px] font-semibold mb-2" style="color: var(--fg);">Upload CV <span style="color: var(--danger);">*</span></label>
+          <label class="block text-[12px] font-semibold mb-2" style="color: var(--fg);">Upload CV(s) <span style="color: var(--danger);">*</span></label>
           <div id="dropZone" class="border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all"
                style="border-color: var(--border); background: var(--bg-card-alt);"
                onclick="document.getElementById('cvFileInput').click()"
                ondragover="event.preventDefault(); this.style.borderColor='var(--primary)'; this.style.background='var(--primary-light)';"
                ondragleave="this.style.borderColor='var(--border)'; this.style.background='var(--bg-card-alt)';"
                ondrop="handleDrop(event)">
-            <input type="file" id="cvFileInput" name="cv_file" accept=".pdf" required class="hidden" onchange="handleFileSelect(event)" />
+            <input type="file" id="cvFileInput" name="cv_files" accept=".pdf" required multiple class="hidden" onchange="handleFileSelect(event)" />
             <div id="dropZoneContent">
               <div class="w-12 h-12 mx-auto mb-3 rounded-xl flex items-center justify-center" style="background: var(--primary-light);">
                 <svg class="w-6 h-6" style="color: var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>
                 </svg>
               </div>
-              <p class="text-[13px] font-medium" style="color: var(--fg);">Drop CV here or click to browse</p>
-              <p class="text-[11px] mt-1" style="color: var(--fg-muted);">PDF format only (max 16MB)</p>
+              <p class="text-[13px] font-medium" style="color: var(--fg);">Drop CV(s) here or click to browse</p>
+              <p class="text-[11px] mt-1" style="color: var(--fg-muted);">PDF format only (max 16MB each) — select multiple files</p>
             </div>
             <div id="fileSelected" class="hidden">
               <div class="w-12 h-12 mx-auto mb-3 rounded-xl flex items-center justify-center" style="background: var(--success-light);">
@@ -416,8 +426,11 @@
                 </svg>
               </div>
               <p id="selectedFileName" class="text-[13px] font-medium" style="color: var(--fg);"></p>
-              <p class="text-[11px] mt-1" style="color: var(--success);">File ready for upload</p>
+              <p id="selectedFileCount" class="text-[11px] mt-1" style="color: var(--success);">File(s) ready for upload</p>
             </div>
+          </div>
+          <!-- File list preview -->
+          <div id="fileListPreview" class="hidden mt-2 space-y-1 max-h-32 overflow-y-auto rounded-lg p-2" style="background: var(--bg-card-alt); border: 1px solid var(--border);">
           </div>
         </div>
         
@@ -436,23 +449,76 @@
           </div>
         </div>
         
-        <button type="submit" class="btn-primary w-full justify-center mt-2">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <button id="uploadBtn" type="submit" class="btn-primary w-full justify-center mt-2">
+          <svg id="uploadIcon" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
           </svg>
-          Upload & Analyze CV
+          <svg id="uploadSpinner" class="w-4 h-4 animate-spin hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/>
+          </svg>
+          <span id="uploadBtnText">Upload & Analyze CV(s)</span>
         </button>
       </form>
     </div>
   </div>
 
   <script>
+    function showUploadLoading(form) {
+      const btn = document.getElementById('uploadBtn');
+      const icon = document.getElementById('uploadIcon');
+      const spinner = document.getElementById('uploadSpinner');
+      const btnText = document.getElementById('uploadBtnText');
+      const fileCount = document.getElementById('cvFileInput').files.length;
+      
+      btn.disabled = true;
+      btn.style.opacity = '0.7';
+      btn.style.cursor = 'wait';
+      icon.classList.add('hidden');
+      spinner.classList.remove('hidden');
+      btnText.textContent = fileCount > 1 
+        ? 'Uploading ' + fileCount + ' CVs... Please wait' 
+        : 'Uploading CV... Please wait';
+      
+      // Also disable the drop zone
+      const dropZone = document.getElementById('dropZone');
+      dropZone.style.opacity = '0.5';
+      dropZone.style.pointerEvents = 'none';
+    }
+
     function handleFileSelect(event) {
-      const file = event.target.files[0];
-      if (file) {
+      const files = event.target.files;
+      if (files.length > 0) {
         document.getElementById('dropZoneContent').classList.add('hidden');
         document.getElementById('fileSelected').classList.remove('hidden');
-        document.getElementById('selectedFileName').textContent = file.name;
+        
+        if (files.length === 1) {
+          document.getElementById('selectedFileName').textContent = files[0].name;
+          document.getElementById('selectedFileCount').textContent = 'File ready for upload';
+        } else {
+          document.getElementById('selectedFileName').textContent = files.length + ' CVs selected';
+          document.getElementById('selectedFileCount').textContent = 'All files ready for upload';
+        }
+        
+        // Update button text
+        document.getElementById('uploadBtnText').textContent = files.length === 1 
+          ? 'Upload & Analyze CV' 
+          : 'Upload & Analyze ' + files.length + ' CVs';
+        
+        // Show file list preview
+        const fileListPreview = document.getElementById('fileListPreview');
+        fileListPreview.innerHTML = '';
+        if (files.length > 1) {
+          fileListPreview.classList.remove('hidden');
+          for (let i = 0; i < files.length; i++) {
+            const div = document.createElement('div');
+            div.className = 'flex items-center gap-2 text-[11px] py-1';
+            div.innerHTML = '<svg class="w-3 h-3 flex-shrink-0" style="color: var(--success);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
+              '<span style="color: var(--fg-secondary);">' + files[i].name + '</span>';
+            fileListPreview.appendChild(div);
+          }
+        } else {
+          fileListPreview.classList.add('hidden');
+        }
       }
     }
     
@@ -462,15 +528,26 @@
       dropZone.style.borderColor = 'var(--border)';
       dropZone.style.background = 'var(--bg-card-alt)';
       
-      const file = event.dataTransfer.files[0];
-      if (file && file.type === 'application/pdf') {
-        document.getElementById('cvFileInput').files = event.dataTransfer.files;
-        document.getElementById('dropZoneContent').classList.add('hidden');
-        document.getElementById('fileSelected').classList.remove('hidden');
-        document.getElementById('selectedFileName').textContent = file.name;
-      } else {
-        alert('Please upload a PDF file only.');
+      const files = event.dataTransfer.files;
+      // Filter only PDF files
+      const pdfFiles = Array.from(files).filter(f => f.type === 'application/pdf');
+      
+      if (pdfFiles.length === 0) {
+        alert('Please upload PDF files only.');
+        return;
       }
+      
+      if (pdfFiles.length < files.length) {
+        alert('Some non-PDF files were ignored. Only PDF files are accepted.');
+      }
+      
+      // Create a new DataTransfer to assign filtered files
+      const dt = new DataTransfer();
+      pdfFiles.forEach(f => dt.items.add(f));
+      document.getElementById('cvFileInput').files = dt.files;
+      
+      // Trigger the display update
+      handleFileSelect({ target: { files: dt.files } });
     }
   </script>
 
@@ -488,7 +565,30 @@
           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
-      <form id="editForm" method="POST" class="space-y-4">
+      <form id="editForm" method="POST" enctype="multipart/form-data" class="space-y-4">
+        <!-- Profile Picture Upload -->
+        <div>
+          <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg);">Profile Picture</label>
+          <div class="flex items-center gap-4">
+            <div id="editPicPreview" class="w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold text-white flex-shrink-0 overflow-hidden" style="background: linear-gradient(135deg, var(--primary), var(--primary-hover));">
+              <span id="editPicInitial">?</span>
+            </div>
+            <div class="flex-1">
+              <input type="file" id="editProfilePic" name="profile_pic" accept="image/*" class="hidden" onchange="previewEditPic(event)" />
+              <div class="flex items-center gap-2 flex-wrap">
+                <button type="button" onclick="document.getElementById('editProfilePic').click()" class="btn-ghost text-[12px] py-2 px-3">
+                  <svg class="w-3.5 h-3.5 inline mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  <span id="editPicBtnText">Choose Photo</span>
+                </button>
+                <button type="button" id="editPicRemoveBtn" onclick="confirmRemovePic()" class="text-[12px] py-2 px-3 rounded-lg font-medium" style="background: var(--danger-light); color: var(--danger); border: none; cursor: pointer; display: none;">
+                  <svg class="w-3.5 h-3.5 inline mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  Remove
+                </button>
+              </div>
+              <p class="text-[10px] mt-1" style="color: var(--fg-muted);">PNG, JPG, GIF, WebP</p>
+            </div>
+          </div>
+        </div>
         <div>
           <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg);">Full Name</label>
           <input type="text" id="editName" name="name" class="input-field" placeholder="e.g. John Doe" />
@@ -538,6 +638,27 @@
   </div>
 
   <!-- ══════════════════════════════════════════════ -->
+  <!-- MODAL: Skills / Competencies                  -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div id="skillsModal" class="modal-backdrop fixed inset-0 z-[100] hidden items-center justify-center p-4" onclick="if(event.target===this)closeModal('skillsModal')">
+    <div class="w-full max-w-md rounded-2xl p-6" style="background: var(--bg-card); border: 1px solid var(--border); box-shadow: 0 24px 48px rgba(0,0,0,0.15);">
+      <div class="flex items-center justify-between mb-5">
+        <div>
+          <h3 class="text-[16px] font-bold" style="color: var(--fg);"><span id="skillsEmpName"></span>'s Skills</h3>
+          <p class="text-[12px] mt-0.5" style="color: var(--fg-muted);">All competencies and skills</p>
+        </div>
+        <button onclick="closeModal('skillsModal')" class="w-8 h-8 rounded-lg flex items-center justify-center" style="color: var(--fg-muted);">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div id="skillsContent" class="space-y-4 max-h-[400px] overflow-y-auto pr-1"></div>
+    </div>
+  </div>
+
+  <!-- Hidden form for deleting profile picture -->
+  <form id="deletePicForm" method="POST" style="display:none;"></form>
+
+  <!-- ══════════════════════════════════════════════ -->
   <!-- SCRIPTS                                       -->
   <!-- ══════════════════════════════════════════════ -->
   <script>
@@ -565,13 +686,101 @@
       document.body.style.overflow = '';
     }
 
-    function openEditModal(id, username, email, name, status) {
+    var _currentEmpId = null;
+
+    function openEditModal(id, username, email, name, status, profilePic) {
+      _currentEmpId = id;
       document.getElementById('editName').value = name || '';
       document.getElementById('editUsername').value = username;
       document.getElementById('editEmail').value = email;
       document.getElementById('editStatus').value = status || 'active';
       document.getElementById('editForm').action = '/manager/employees/edit/' + id;
+      
+      // Reset profile pic preview
+      var preview = document.getElementById('editPicPreview');
+      var removeBtn = document.getElementById('editPicRemoveBtn');
+      var btnText = document.getElementById('editPicBtnText');
+      if (profilePic) {
+        preview.innerHTML = '<img src="/manager/uploads/profile_pics/' + profilePic + '" class="w-full h-full object-cover" />';
+        removeBtn.style.display = 'inline-flex';
+        btnText.textContent = 'Change Photo';
+      } else {
+        var letter = (name || username || '?')[0].toUpperCase();
+        preview.innerHTML = '<span id="editPicInitial">' + letter + '</span>';
+        removeBtn.style.display = 'none';
+        btnText.textContent = 'Choose Photo';
+      }
+      
+      // Reset file input
+      document.getElementById('editProfilePic').value = '';
+      
       openModal('editEmployeeModal');
+    }
+
+    function previewEditPic(event) {
+      var file = event.target.files[0];
+      if (file) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var preview = document.getElementById('editPicPreview');
+          preview.innerHTML = '<img src="' + e.target.result + '" class="w-full h-full object-cover" />';
+          document.getElementById('editPicRemoveBtn').style.display = 'none';
+          document.getElementById('editPicBtnText').textContent = 'Change Photo';
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function confirmRemovePic() {
+      if (confirm('Remove this profile picture?')) {
+        var form = document.getElementById('deletePicForm');
+        form.action = '/manager/employees/' + _currentEmpId + '/delete-pic';
+        form.submit();
+      }
+    }
+
+    function openSkillsModal(empName, technicalSkills) {
+      document.getElementById('skillsEmpName').textContent = empName;
+      var container = document.getElementById('skillsContent');
+      container.innerHTML = '';
+      
+      if (!technicalSkills || Object.keys(technicalSkills).length === 0) {
+        container.innerHTML = '<p class="text-[13px]" style="color: var(--fg-muted);">No skills data available.</p>';
+        openModal('skillsModal');
+        return;
+      }
+
+      // Display skills grouped by category
+      for (var category in technicalSkills) {
+        var skills = technicalSkills[category];
+        if (!Array.isArray(skills)) continue;
+
+        var section = document.createElement('div');
+        section.className = 'rounded-xl p-4';
+        section.style.cssText = 'background: var(--bg-card-alt); border: 1px solid var(--border);';
+
+        var title = document.createElement('div');
+        title.className = 'text-[11px] font-bold uppercase tracking-wider mb-3';
+        title.style.color = 'var(--primary)';
+        title.textContent = category.replace(/_/g, ' ');
+        section.appendChild(title);
+
+        var tags = document.createElement('div');
+        tags.className = 'flex flex-wrap gap-1.5';
+
+        skills.forEach(function(skill) {
+          var tag = document.createElement('span');
+          tag.className = 'inline-block px-2.5 py-1 rounded-full text-[11px] font-medium';
+          tag.style.cssText = 'background: var(--primary-light); color: var(--primary);';
+          tag.textContent = skill;
+          tags.appendChild(tag);
+        });
+
+        section.appendChild(tags);
+        container.appendChild(section);
+      }
+
+      openModal('skillsModal');
     }
 
     function confirmDelete(id, username) {
@@ -582,7 +791,7 @@
 
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') {
-        ['addEmployeeModal', 'editEmployeeModal', 'deleteModal'].forEach(closeModal);
+        ['addEmployeeModal', 'editEmployeeModal', 'deleteModal', 'skillsModal'].forEach(closeModal);
       }
     });
   </script>

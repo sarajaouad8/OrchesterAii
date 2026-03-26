@@ -1,0 +1,167 @@
+{% extends "employee/base.html" %}
+{% block title %}Profile{% endblock %}
+
+{% block page_heading %}
+<div>
+  <h1 class="text-[18px] font-bold" style="color: var(--fg);">My Profile</h1>
+  <p class="text-[12px] mt-0.5" style="color: var(--fg-muted);">Manage your personal information, photo, and password</p>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+.input-field { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-card-alt); color: var(--fg); font-size: 13px; outline: none; transition: all 0.15s; }
+.input-field:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(124,58,237,0.08); }
+.skill-tag { display: inline-block; padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 700; background: var(--primary-light); color: var(--primary); margin: 4px 4px 0 0; }
+.btn-ghost { background: transparent; border: 1px solid var(--border); border-radius: 10px; font-size: 12px; font-weight: 500; padding: 8px 14px; color: var(--fg-secondary); cursor: pointer; transition: all 0.15s; }
+.btn-ghost:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+{% endblock %}
+
+{% block content %}
+<form method="POST" action="{{ url_for('employee.profile') }}" enctype="multipart/form-data" class="max-w-4xl mx-auto">
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+  <!-- Identity card -->
+  <div class="xl:col-span-1 space-y-6">
+    <div class="glass-card p-6 text-center">
+      <div id="picPreview" class="w-24 h-24 mx-auto rounded-full flex items-center justify-center text-3xl font-bold text-white mb-4 overflow-hidden" style="background: linear-gradient(135deg, var(--primary), var(--primary-hover));">
+        {% if user.profile_pic %}
+        <img src="{{ url_for('employee.profile_pic', filename=user.profile_pic) }}" class="w-full h-full object-cover" />
+        {% else %}
+        {{ (user.name or user.username)[0].upper() }}
+        {% endif %}
+      </div>
+
+      <div class="flex justify-center gap-2 mb-4">
+        <input type="file" id="profilePicInput" name="profile_pic" accept="image/*" class="hidden" onchange="previewPic(event)" />
+        <button type="button" onclick="document.getElementById('profilePicInput').click()" class="btn-ghost text-[11px] py-1.5 px-3">
+          {% if user.profile_pic %}Change Photo{% else %}Upload Photo{% endif %}
+        </button>
+        {% if user.profile_pic %}
+        <button type="button" onclick="if(confirm('Remove your profile picture?')){document.getElementById('deletePicForm').submit();}" class="text-[11px] py-1.5 px-3 rounded-lg font-medium" style="background: var(--danger-light); color: var(--danger); border: none; cursor: pointer;">
+          Remove
+        </button>
+        {% endif %}
+      </div>
+
+      <h2 class="text-lg font-bold" style="color: var(--fg);">{{ user.name or user.username }}</h2>
+      <p class="text-[12px] mt-1" style="color: var(--fg-muted);">@{{ user.username }}</p>
+      {% if user.professional_headline %}
+      <p class="text-[13px] mt-3" style="color: var(--fg-secondary);">{{ user.professional_headline }}</p>
+      {% endif %}
+
+      <div class="mt-6 pt-6" style="border-top: 1px solid var(--border); text-align: left;">
+        <div class="flex items-center justify-between text-[12px] py-2">
+          <span style="color: var(--fg-muted);">Status</span>
+          <span class="badge" style="background: var(--success-light); color: var(--success);">{{ user.status }}</span>
+        </div>
+        <div class="flex items-center justify-between text-[12px] py-2">
+          <span style="color: var(--fg-muted);">Role</span>
+          <span style="color: var(--fg); font-weight: 600;">{{ user.role|title }}</span>
+        </div>
+        {% if user.years_of_experience is not none %}
+        <div class="flex items-center justify-between text-[12px] py-2">
+          <span style="color: var(--fg-muted);">Experience</span>
+          <span style="color: var(--fg); font-weight: 600;">{{ user.years_of_experience }} yrs</span>
+        </div>
+        {% endif %}
+        {% if user.created_at %}
+        <div class="flex items-center justify-between text-[12px] py-2">
+          <span style="color: var(--fg-muted);">Member since</span>
+          <span style="color: var(--fg); font-weight: 600;">{{ user.created_at.strftime('%b %Y') }}</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit + skills -->
+  <div class="xl:col-span-2 space-y-6">
+    <div class="glass-card p-6">
+      <h3 class="text-[15px] font-bold mb-1" style="color: var(--fg);">Personal Information</h3>
+      <p class="text-[12px] mb-6" style="color: var(--fg-muted);">Update what your team sees on your profile</p>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg-secondary);">Full Name</label>
+            <input class="input-field" name="name" value="{{ user.name or '' }}" placeholder="Your name" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg-secondary);">Email</label>
+              <input class="input-field" type="email" name="email" value="{{ user.email or '' }}" placeholder="you@company.com" />
+            </div>
+            <div>
+              <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg-secondary);">Phone</label>
+              <input class="input-field" name="phone" value="{{ user.phone or '' }}" placeholder="+212…" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg-secondary);">Location</label>
+              <input class="input-field" name="location" value="{{ user.location or '' }}" placeholder="City, Country" />
+            </div>
+            <div>
+              <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg-secondary);">Headline</label>
+              <input class="input-field" name="professional_headline" value="{{ user.professional_headline or '' }}" placeholder="e.g. Full-stack developer" />
+            </div>
+          </div>
+        </div>
+    </div>
+
+    <!-- Password -->
+    <div class="glass-card p-6">
+      <h3 class="text-[15px] font-bold mb-1" style="color: var(--fg);">Security</h3>
+      <p class="text-[12px] mb-4" style="color: var(--fg-muted);">Change your password</p>
+      <div class="max-w-md">
+        <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg-secondary);">New Password</label>
+        <input type="password" name="password" class="input-field" placeholder="Leave blank to keep current password" />
+        <p class="text-[10px] mt-1" style="color: var(--fg-muted);">Must be at least 8 characters</p>
+      </div>
+    </div>
+
+    <!-- Skills -->
+    <div class="glass-card p-6">
+      <h3 class="text-[15px] font-bold mb-1" style="color: var(--fg);">Skills &amp; Competencies</h3>
+      <p class="text-[12px] mb-5" style="color: var(--fg-muted);">From your CV analysis — contact your manager to update the source CV</p>
+      {% set skills = user.get_all_skills() %}
+      {% if skills %}
+        <div class="flex flex-wrap">
+          {% for s in skills %}
+            <span class="skill-tag">{{ s }}</span>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="rounded-xl p-6 text-center" style="background: var(--bg-card-alt); border: 1px dashed var(--border);">
+          <p class="text-[13px]" style="color: var(--fg-muted);">No skills listed yet.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Save -->
+    <div class="flex justify-end">
+      <button type="submit" class="btn-primary">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Save Changes
+      </button>
+    </div>
+  </div>
+</div>
+</form>
+
+<!-- Hidden delete pic form -->
+<form id="deletePicForm" method="POST" action="{{ url_for('employee.delete_own_pic') }}" style="display:none;"></form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function previewPic(event) {
+    var file = event.target.files[0];
+    if (file) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('picPreview').innerHTML = '<img src="' + e.target.result + '" class="w-full h-full object-cover" />';
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+</script>
+{% endblock %}

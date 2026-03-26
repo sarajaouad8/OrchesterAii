@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Profile - OrchestrAi</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] } } }
+    }
+  </script>
+
+  <style>
+    :root {
+      --bg: #f4f0fb; --bg-sidebar: #ffffff; --bg-card: #ffffff; --bg-card-alt: #faf8ff;
+      --fg: #1a1225; --fg-secondary: #6b5f7d; --fg-muted: #9b91ab; --border: #ebe5f5;
+      --primary: #7c3aed; --primary-light: #ede9fe; --primary-hover: #6d28d9;
+      --success: #10b981; --success-light: #d1fae5;
+      --warning: #f59e0b; --warning-light: #fef3c7;
+      --danger: #ef4444; --danger-light: #fee2e2;
+      --info: #3b82f6; --info-light: #dbeafe;
+      --shadow-card: 0 1px 3px rgba(124,58,237,0.04), 0 4px 16px rgba(124,58,237,0.03);
+    }
+    .dark {
+      --bg: #0c0a12; --bg-sidebar: #13111a; --bg-card: #1a1726; --bg-card-alt: #1f1b2e;
+      --fg: #eee8f6; --fg-secondary: #a89bc0; --fg-muted: #6b5f7d; --border: #2a2438;
+      --primary: #a78bfa; --primary-light: rgba(167,139,250,0.12); --primary-hover: #8b5cf6;
+      --success: #34d399; --success-light: rgba(52,211,153,0.12);
+      --warning: #fbbf24; --warning-light: rgba(251,191,36,0.12);
+      --danger: #f87171; --danger-light: rgba(248,113,113,0.12);
+      --info: #60a5fa; --info-light: rgba(96,165,250,0.12);
+      --shadow-card: 0 1px 3px rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.15);
+    }
+    body { background: var(--bg); color: var(--fg); font-family: 'Inter', system-ui, sans-serif; }
+    .glass-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; box-shadow: var(--shadow-card); }
+    .sidebar { background: var(--bg-sidebar); border-right: 1px solid var(--border); }
+    .sidebar-link {
+      display: flex; align-items: center; gap: 12px; padding: 10px 16px;
+      border-radius: 10px; font-size: 13px; font-weight: 500;
+      color: var(--fg-secondary); transition: all 0.15s ease; text-decoration: none;
+    }
+    .sidebar-link:hover { background: var(--primary-light); color: var(--primary); }
+    .sidebar-link.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+    .btn-primary {
+      background: var(--primary); color: #fff; border: none; border-radius: 12px;
+      font-size: 13px; font-weight: 600; padding: 12px 24px; cursor: pointer;
+      transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+    .btn-ghost {
+      background: transparent; border: 1px solid var(--border); border-radius: 10px;
+      font-size: 13px; font-weight: 500; padding: 8px 14px;
+      color: var(--fg-secondary); cursor: pointer; transition: all 0.15s;
+    }
+    .btn-ghost:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+    .input-field {
+      width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px;
+      background: var(--bg-card-alt); color: var(--fg); font-size: 13px; outline: none; transition: all 0.15s;
+    }
+    .input-field:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(124,58,237,0.08); }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--fg-muted); border-radius: 8px; }
+  </style>
+
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('theme');
+        if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme:dark)').matches))
+          document.documentElement.classList.add('dark');
+      } catch (e) {}
+    })();
+  </script>
+</head>
+
+<body class="antialiased">
+  <div class="flex h-screen overflow-hidden">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar hidden lg:flex w-[260px] flex-col flex-shrink-0">
+      <div class="flex items-center gap-3 px-6 py-6">
+        <div class="flex h-10 w-10 items-center justify-center">
+          <img src="{{ url_for('static', filename='images/logo.png') }}" class="w-full h-full object-contain" alt="OrchestrAi">
+        </div>
+        <div>
+          <div class="text-[15px] font-bold" style="color: var(--fg);">OrchestrAi</div>
+          <div class="text-[11px] font-medium" style="color: var(--fg-muted);">Manager Portal</div>
+        </div>
+      </div>
+
+      <nav class="flex-1 px-4 space-y-1 mt-2 overflow-y-auto">
+        <div class="text-[10px] font-bold uppercase tracking-widest px-3 mb-2" style="color: var(--fg-muted);">Main</div>
+        <a class="sidebar-link" href="{{ url_for('manager.dashboard') }}">
+          <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Overview
+        </a>
+        <a class="sidebar-link" href="{{ url_for('manager.projects') }}">
+          <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          Projects
+        </a>
+        <a class="sidebar-link" href="{{ url_for('manager.employees') }}">
+          <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Employees
+        </a>
+
+        <div class="text-[10px] font-bold uppercase tracking-widest px-3 mb-2 mt-6" style="color: var(--fg-muted);">Account</div>
+        <a class="sidebar-link active" href="{{ url_for('manager.manager_profile') }}">
+          <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          My Profile
+        </a>
+      </nav>
+
+      <div class="p-4">
+        <div class="rounded-2xl p-4" style="background: linear-gradient(135deg, var(--primary), var(--primary-hover));">
+          <div class="flex items-center gap-2 mb-2">
+            <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span class="text-xs font-bold text-white">Security</span>
+          </div>
+          <p class="text-[11px] leading-relaxed text-white/80">Update your password regularly to keep your account secure.</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN PANEL -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+
+      <!-- Top Bar -->
+      <header class="flex items-center justify-between px-6 lg:px-8 h-[72px] flex-shrink-0" style="border-bottom: 1px solid var(--border); background: var(--bg-sidebar);">
+        <div>
+          <h1 class="text-[18px] font-bold" style="color: var(--fg);">My Profile</h1>
+          <p class="text-[12px] mt-0.5" style="color: var(--fg-muted);">Manage your personal information and settings</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button onclick="toggleTheme()" class="w-10 h-10 rounded-xl flex items-center justify-center transition-all" style="border: 1px solid var(--border); color: var(--fg-secondary);">
+            <svg id="sunIcon" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            <svg id="moonIcon" class="w-5 h-5 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </button>
+          <a href="{{ url_for('auth.logout') }}" class="w-10 h-10 rounded-xl flex items-center justify-center" style="border: 1px solid var(--border); color: var(--fg-secondary);" title="Logout">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </a>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <main class="flex-1 overflow-y-auto p-6 lg:p-8">
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="mb-5 rounded-xl px-4 py-3 text-[13px] font-medium flex items-center gap-2"
+                style="{% if category == 'error' %}background: var(--danger-light); color: var(--danger);{% elif category == 'success' %}background: var(--success-light); color: var(--success);{% else %}background: var(--primary-light); color: var(--primary);{% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST" enctype="multipart/form-data" class="max-w-3xl mx-auto space-y-6">
+
+          <!-- Profile Picture Card -->
+          <div class="glass-card p-6">
+            <h3 class="text-[15px] font-bold mb-4" style="color: var(--fg);">Profile Picture</h3>
+            <div class="flex items-center gap-6">
+              <div id="picPreview" class="w-24 h-24 rounded-full flex items-center justify-center text-3xl font-bold text-white flex-shrink-0 overflow-hidden" style="background: linear-gradient(135deg, var(--primary), var(--primary-hover));">
+                {% if user.profile_pic %}
+                <img src="{{ url_for('manager.profile_pic', filename=user.profile_pic) }}" class="w-full h-full object-cover" />
+                {% else %}
+                {{ (user.name or user.username)[0].upper() }}
+                {% endif %}
+              </div>
+              <div>
+                <input type="file" id="profilePicInput" name="profile_pic" accept="image/*" class="hidden" onchange="previewPic(event)" />
+                <div class="flex items-center gap-2 flex-wrap">
+                  <button type="button" onclick="document.getElementById('profilePicInput').click()" class="btn-ghost text-[12px] py-2 px-4">
+                    <svg class="w-3.5 h-3.5 inline mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    {% if user.profile_pic %}Change Photo{% else %}Upload Photo{% endif %}
+                  </button>
+                  {% if user.profile_pic %}
+                  <button type="button" onclick="if(confirm('Remove your profile picture?')){document.getElementById('deletePicForm').submit();}" class="text-[12px] py-2 px-4 rounded-lg font-medium" style="background: var(--danger-light); color: var(--danger); border: none; cursor: pointer;">
+                    <svg class="w-3.5 h-3.5 inline mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    Remove
+                  </button>
+                  {% endif %}
+                </div>
+                <p class="text-[11px] mt-2" style="color: var(--fg-muted);">PNG, JPG, GIF, or WebP. Max 16 MB.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Personal Info Card -->
+          <div class="glass-card p-6">
+            <h3 class="text-[15px] font-bold mb-4" style="color: var(--fg);">Personal Information</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg-secondary);">Full Name</label>
+                <input type="text" name="name" value="{{ user.name or '' }}" class="input-field" placeholder="John Doe" />
+              </div>
+              <div>
+                <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg-secondary);">Username</label>
+                <input type="text" value="{{ user.username }}" class="input-field" disabled style="opacity: 0.6; cursor: not-allowed;" />
+                <p class="text-[10px] mt-1" style="color: var(--fg-muted);">Username cannot be changed</p>
+              </div>
+              <div>
+                <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg-secondary);">Email</label>
+                <input type="email" name="email" value="{{ user.email or '' }}" class="input-field" placeholder="john@example.com" />
+              </div>
+              <div>
+                <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg-secondary);">Phone</label>
+                <input type="text" name="phone" value="{{ user.phone or '' }}" class="input-field" placeholder="+1 (555) 123-4567" />
+              </div>
+              <div>
+                <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg-secondary);">Location</label>
+                <input type="text" name="location" value="{{ user.location or '' }}" class="input-field" placeholder="San Francisco, CA" />
+              </div>
+              <div>
+                <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg-secondary);">Professional Headline</label>
+                <input type="text" name="professional_headline" value="{{ user.professional_headline or '' }}" class="input-field" placeholder="Engineering Manager" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Security Card -->
+          <div class="glass-card p-6">
+            <h3 class="text-[15px] font-bold mb-1" style="color: var(--fg);">Security</h3>
+            <p class="text-[12px] mb-4" style="color: var(--fg-muted);">Change your password</p>
+            <div class="max-w-md">
+              <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg-secondary);">New Password</label>
+              <input type="password" name="password" class="input-field" placeholder="Leave blank to keep current password" />
+              <p class="text-[10px] mt-1" style="color: var(--fg-muted);">Must be at least 8 characters</p>
+            </div>
+          </div>
+
+          <!-- Account Info Card (read-only) -->
+          <div class="glass-card p-6">
+            <h3 class="text-[15px] font-bold mb-4" style="color: var(--fg);">Account Information</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="rounded-xl p-4" style="background: var(--bg-card-alt); border: 1px solid var(--border);">
+                <div class="text-[11px] font-semibold uppercase tracking-wider mb-1" style="color: var(--fg-muted);">Role</div>
+                <div class="text-[14px] font-bold" style="color: var(--primary);">{{ user.role | title }}</div>
+              </div>
+              <div class="rounded-xl p-4" style="background: var(--bg-card-alt); border: 1px solid var(--border);">
+                <div class="text-[11px] font-semibold uppercase tracking-wider mb-1" style="color: var(--fg-muted);">Status</div>
+                <div class="text-[14px] font-bold" style="color: var(--success);">{{ user.status | title }}</div>
+              </div>
+              <div class="rounded-xl p-4" style="background: var(--bg-card-alt); border: 1px solid var(--border);">
+                <div class="text-[11px] font-semibold uppercase tracking-wider mb-1" style="color: var(--fg-muted);">Member Since</div>
+                <div class="text-[14px] font-bold" style="color: var(--fg);">{{ user.created_at.strftime('%b %d, %Y') if user.created_at else 'N/A' }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Save Button -->
+          <div class="flex justify-end">
+            <button type="submit" class="btn-primary">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              Save Changes
+            </button>
+          </div>
+        </form>
+
+        <!-- Hidden delete pic form -->
+        <form id="deletePicForm" method="POST" action="{{ url_for('manager.delete_own_pic') }}" style="display:none;"></form>
+
+      </main>
+    </div>
+  </div>
+
+  <script>
+    function updateThemeIcons() {
+      var d = document.documentElement.classList.contains('dark');
+      document.getElementById('sunIcon').style.display = d ? 'none' : 'block';
+      document.getElementById('moonIcon').style.display = d ? 'block' : 'none';
+    }
+    updateThemeIcons();
+
+    function toggleTheme() {
+      var d = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme', d ? 'dark' : 'light');
+      updateThemeIcons();
+    }
+
+    function previewPic(event) {
+      var file = event.target.files[0];
+      if (file) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById('picPreview').innerHTML = '<img src="' + e.target.result + '" class="w-full h-full object-cover" />';
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  </script>
+</body>
+</html>

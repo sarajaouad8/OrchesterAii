@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{{ project.nom_projet or project.name }} - OrchestrAi</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -214,8 +215,8 @@
     <!-- ─────────────────── SIDEBAR (same as dashboard) ─────────────────── -->
     <aside class="sidebar hidden lg:flex w-[260px] flex-col flex-shrink-0">
       <div class="flex items-center gap-3 px-6 py-6">
-        <div class="flex h-10 w-10 items-center justify-center rounded-xl" style="background: var(--primary);">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        <div class="flex h-10 w-10 items-center justify-center">
+          <img src="{{ url_for('static', filename='images/logo.png') }}" class="w-full h-full object-contain" alt="OrchestrAi">
         </div>
         <div>
           <div class="text-[15px] font-bold" style="color: var(--fg);">OrchestrAi</div>
@@ -238,10 +239,10 @@
           Employees
         </a>
 
-        <div class="text-[10px] font-bold uppercase tracking-widest px-3 mb-2 mt-6" style="color: var(--fg-muted);">Settings</div>
-        <a class="sidebar-link" href="#">
-          <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          Settings
+        <div class="text-[10px] font-bold uppercase tracking-widest px-3 mb-2 mt-6" style="color: var(--fg-muted);">Account</div>
+        <a class="sidebar-link" href="{{ url_for('manager.manager_profile') }}">
+          <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          My Profile
         </a>
       </nav>
 
@@ -282,11 +283,15 @@
             <svg id="sunIcon" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
             <svg id="moonIcon" class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
           </button>
-          <div class="flex items-center gap-2.5 pl-3" style="border-left: 1px solid var(--border);">
+          <a href="{{ url_for('manager.manager_profile') }}" class="flex items-center gap-2.5 pl-3" style="border-left: 1px solid var(--border); text-decoration: none;">
+            {% if current_manager and current_manager.profile_pic %}
+            <img src="{{ url_for('manager.profile_pic', filename=current_manager.profile_pic) }}" class="w-8 h-8 rounded-full object-cover" style="border: 2px solid var(--primary-light);" alt="">
+            {% else %}
             <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style="background: var(--primary);">
               {{ session.get('username', 'M')[0].upper() }}
             </div>
-          </div>
+            {% endif %}
+          </a>
           <a href="{{ url_for('auth.logout') }}" class="w-9 h-9 rounded-xl flex items-center justify-center" style="border: 1px solid var(--border); color: var(--fg-secondary);" title="Logout">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           </a>
@@ -473,7 +478,7 @@
                   <!-- Task Name + subtask progress -->
                   <td>
                     <div>
-                      <span class="task-name-link" onclick='openEditModal({{ task.id }}, {{ project.id }}, "{{ task.task_id|e }}", {{ task.nom|tojson }}, "{{ task.priorite|default("Moyenne")|e }}", {{ task.duree_estimee_jours or 0 }}, "{{ task.status|e }}", {{ task.sous_taches|default([])|tojson }})'>{{ task.nom }}</span>
+                      <span class="task-name-link" onclick='openEditModal({{ task.id }}, {{ project.id }}, "{{ task.task_id|e }}", {{ task.nom|tojson }}, "{{ task.priorite|default("Moyenne")|e }}", {{ task.duree_estimee_jours or 0 }}, "{{ task.status|e }}", {{ task.sous_taches|default([])|tojson }}, {{ task.collaborators|map(attribute="id")|list|tojson }}, {{ task.collaborators|map(attribute="employee")|map(attribute="full_name")|list|tojson }}, {{ task.collaborators|map(attribute="employee_id")|list|tojson }}, {{ task.collaborators|map(attribute="role")|list|tojson }}, {{ task.collaborators|map(attribute="match_score")|list|tojson }})'>{{ task.nom }}</span>
                       {% if task.sous_taches %}
                       {% set total_st = task.sous_taches|length %}
                       {% set done_st = [] %}
@@ -510,9 +515,13 @@
                     {% if task.assigned_employee %}
                     <div class="flex items-center gap-2">
                       {% set colors = ['#7c3aed','#10b981','#f59e0b','#3b82f6','#ef4444','#ec4899'] %}
+                      {% if task.assigned_employee.profile_pic %}
+                      <img src="{{ url_for('manager.profile_pic', filename=task.assigned_employee.profile_pic) }}" alt="{{ task.assigned_employee.full_name }}" class="avatar" style="object-fit: cover; border: 2px solid var(--primary-light);">
+                      {% else %}
                       <div class="avatar" style="background: {{ colors[task.assigned_employee.id % 6] }};">
                         {{ task.assigned_employee.full_name[0]|upper }}
                       </div>
+                      {% endif %}
                       <div>
                         <span class="text-[12px] font-medium" style="color: var(--fg);">{{ task.assigned_employee.full_name }}</span>
                         {% if task.match_score is not none %}
@@ -522,6 +531,23 @@
                         {% endif %}
                       </div>
                     </div>
+                    {% if task.collaborators %}
+                    <div class="flex items-center gap-1 mt-1.5 flex-wrap">
+                      {% for collab in task.collaborators %}
+                      <div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold" style="background: var(--info-light); color: var(--info);">
+                        {% if collab.employee.profile_pic %}
+                        <img src="{{ url_for('manager.profile_pic', filename=collab.employee.profile_pic) }}" class="w-4 h-4 rounded-full object-cover" alt="">
+                        {% else %}
+                        <div class="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold text-white" style="background: {{ colors[collab.employee.id % 6] }};">{{ collab.employee.full_name[0]|upper }}</div>
+                        {% endif %}
+                        {{ collab.employee.full_name.split(' ')[0] }}
+                        {% if collab.role == 'auto-reassigned' %}
+                        <span title="Auto-reassigned by AI">🤖</span>
+                        {% endif %}
+                      </div>
+                      {% endfor %}
+                    </div>
+                    {% endif %}
                     {% else %}
                     <span class="text-[12px]" style="color: var(--fg-muted);">Unassigned</span>
                     {% endif %}
@@ -546,7 +572,7 @@
                   </td>
                   <!-- Actions -->
                   <td>
-                    <button class="btn-sm" style="background: transparent; color: var(--fg-muted); padding: 4px 6px;" onclick='openEditModal({{ task.id }}, {{ project.id }}, "{{ task.task_id|e }}", {{ task.nom|tojson }}, "{{ task.priorite|default("Moyenne")|e }}", {{ task.duree_estimee_jours or 0 }}, "{{ task.status|e }}", {{ task.sous_taches|default([])|tojson }})' title="Edit task">
+                    <button class="btn-sm" style="background: transparent; color: var(--fg-muted); padding: 4px 6px;" onclick='openEditModal({{ task.id }}, {{ project.id }}, "{{ task.task_id|e }}", {{ task.nom|tojson }}, "{{ task.priorite|default("Moyenne")|e }}", {{ task.duree_estimee_jours or 0 }}, "{{ task.status|e }}", {{ task.sous_taches|default([])|tojson }}, {{ task.collaborators|map(attribute="id")|list|tojson }}, {{ task.collaborators|map(attribute="employee")|map(attribute="full_name")|list|tojson }}, {{ task.collaborators|map(attribute="employee_id")|list|tojson }}, {{ task.collaborators|map(attribute="role")|list|tojson }}, {{ task.collaborators|map(attribute="match_score")|list|tojson }})' title="Edit task">
                       <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     </button>
                   </td>
@@ -619,8 +645,12 @@
             </select>
           </div>
           <div>
-            <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg-secondary);">Duration (days)</label>
-            <input type="number" id="editDuree" class="input-field" min="0" />
+            <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg-secondary);">Task Duration (days)</label>
+            <div class="flex items-center gap-1">
+              <button type="button" onclick="adjustTaskDays(-1)" class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style="background: var(--danger-light); color: var(--danger); font-size: 18px; font-weight: 700; border: none; cursor: pointer; transition: all 0.15s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">−</button>
+              <input type="number" id="editDuree" class="input-field text-center" min="1" style="font-weight: 700; font-size: 15px;" onchange="onTaskDaysChanged()" />
+              <button type="button" onclick="adjustTaskDays(1)" class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style="background: var(--success-light); color: var(--success); font-size: 18px; font-weight: 700; border: none; cursor: pointer; transition: all 0.15s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">+</button>
+            </div>
           </div>
           <div>
             <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg-secondary);">Status</label>
@@ -632,9 +662,21 @@
           </div>
         </div>
 
+        <!-- Days summary banner -->
+        <div id="daysSummaryBanner" class="rounded-xl p-3 flex items-center justify-between" style="background: var(--primary-light); border: 1px solid var(--primary); display: none;">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4" style="color: var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span class="text-[12px] font-semibold" style="color: var(--primary);">Task: <span id="taskDaysLabel">0</span>d</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-[11px] font-medium" style="color: var(--fg-muted);">Sub-tasks total: <strong id="subTaskDaysTotal" style="color: var(--fg);">0</strong>d</span>
+            <span id="daysMismatchWarning" class="text-[10px] font-semibold px-2 py-0.5 rounded-md" style="background: var(--warning-light); color: var(--warning); display: none;">⚠ Mismatch</span>
+          </div>
+        </div>
+
         <!-- Assign employee -->
         <div>
-          <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg-secondary);">Assign To</label>
+          <label class="block text-[12px] font-semibold mb-1.5" style="color: var(--fg-secondary);">Primary Assignee</label>
           <div class="flex gap-2">
             <select id="editAssignee" class="input-field flex-1">
               <option value="">— Unassigned —</option>
@@ -643,6 +685,29 @@
               {% endfor %}
             </select>
             <button onclick="assignEmployee()" class="btn-sm" style="background: var(--primary); color: #fff; border-radius: 10px; padding: 8px 16px;">Assign</button>
+          </div>
+        </div>
+
+        <!-- Collaborators (Helpers) -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-[12px] font-semibold" style="color: var(--fg-secondary);">
+              Helpers
+              <span class="text-[10px] font-normal" style="color: var(--fg-muted);">(employees helping on this task)</span>
+            </label>
+          </div>
+          <div id="collaboratorsList" class="space-y-1.5 mb-2"></div>
+          <div class="flex gap-2">
+            <select id="addCollaboratorSelect" class="input-field flex-1" style="padding: 7px 12px; font-size: 12px;">
+              <option value="">— Add a helper —</option>
+              {% for emp in employees %}
+              <option value="{{ emp.id }}">{{ emp.full_name }}</option>
+              {% endfor %}
+            </select>
+            <button onclick="addCollaborator()" class="btn-sm" style="background: var(--info); color: #fff; border-radius: 10px; padding: 8px 14px; font-size: 12px;">
+              <svg class="w-3.5 h-3.5" style="display:inline;vertical-align:middle;margin-right:3px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add
+            </button>
           </div>
         </div>
 
@@ -743,12 +808,29 @@
     /* ── Edit Modal ── */
     var currentTask = {};
 
-    function openEditModal(id, projectId, taskId, nom, priorite, duree, status, sousTaches) {
+    function openEditModal(id, projectId, taskId, nom, priorite, duree, status, sousTaches, collabIds, collabNames, collabEmpIds, collabRoles, collabScores) {
       currentTask = {
         id: id, projectId: projectId, taskId: taskId, nom: nom,
         priorite: priorite, duree: duree, status: status,
-        sousTaches: JSON.parse(JSON.stringify(sousTaches || []))
+        sousTaches: JSON.parse(JSON.stringify(sousTaches || [])),
+        collaborators: []
       };
+
+      // Build collaborators array
+      collabIds = collabIds || [];
+      collabNames = collabNames || [];
+      collabEmpIds = collabEmpIds || [];
+      collabRoles = collabRoles || [];
+      collabScores = collabScores || [];
+      for (var i = 0; i < collabIds.length; i++) {
+        currentTask.collaborators.push({
+          id: collabIds[i],
+          name: collabNames[i],
+          employee_id: collabEmpIds[i],
+          role: collabRoles[i],
+          score: collabScores[i]
+        });
+      }
 
       document.getElementById('editTaskId').textContent = taskId;
       document.getElementById('editNom').value = nom;
@@ -757,10 +839,100 @@
       document.getElementById('editStatus').value = status;
 
       renderSubtasks();
+      renderCollaborators();
 
       document.getElementById('editTaskModal').classList.remove('hidden');
       document.getElementById('editTaskModal').classList.add('flex');
       document.body.style.overflow = 'hidden';
+    }
+
+    function renderCollaborators() {
+      var container = document.getElementById('collaboratorsList');
+      container.innerHTML = '';
+
+      if (!currentTask.collaborators || currentTask.collaborators.length === 0) {
+        container.innerHTML = '<p class="text-[11px] py-2" style="color: var(--fg-muted);">No helpers yet. Employees are auto-assigned here when they finish their tasks.</p>';
+        return;
+      }
+
+      var colors = ['#7c3aed','#10b981','#f59e0b','#3b82f6','#ef4444','#ec4899'];
+
+      currentTask.collaborators.forEach(function(collab) {
+        var div = document.createElement('div');
+        div.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:8px 12px; border-radius:10px; border:1px solid var(--border); background:var(--bg-card-alt);';
+
+        var leftSide = document.createElement('div');
+        leftSide.style.cssText = 'display:flex; align-items:center; gap:8px;';
+
+        var avatar = document.createElement('div');
+        avatar.style.cssText = 'width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#fff; background:' + colors[collab.employee_id % 6] + ';';
+        avatar.textContent = collab.name[0].toUpperCase();
+
+        var info = document.createElement('div');
+        var nameLine = document.createElement('span');
+        nameLine.style.cssText = 'font-size:12px; font-weight:600; color:var(--fg);';
+        nameLine.textContent = collab.name;
+        info.appendChild(nameLine);
+
+        var roleLine = document.createElement('div');
+        roleLine.style.cssText = 'font-size:10px; color:var(--fg-muted); display:flex; align-items:center; gap:4px;';
+        if (collab.role === 'auto-reassigned') {
+          roleLine.innerHTML = '🤖 Auto-reassigned';
+        } else {
+          roleLine.textContent = 'Helper';
+        }
+        if (collab.score) {
+          roleLine.innerHTML += ' · <span style="color:var(--success);font-weight:600;">' + Math.round(collab.score) + '%</span>';
+        }
+        info.appendChild(roleLine);
+
+        leftSide.appendChild(avatar);
+        leftSide.appendChild(info);
+
+        var removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.style.cssText = 'width:24px; height:24px; border-radius:6px; border:none; background:var(--danger-light); color:var(--danger); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:12px; transition: all 0.15s;';
+        removeBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+        removeBtn.title = 'Remove helper';
+        removeBtn.dataset.collabId = collab.id;
+        removeBtn.onclick = function(e) {
+          e.stopPropagation();
+          if (confirm('Remove ' + collab.name + ' from this task?')) {
+            removeCollaborator(collab.id);
+          }
+        };
+
+        div.appendChild(leftSide);
+        div.appendChild(removeBtn);
+        container.appendChild(div);
+      });
+    }
+
+    function removeCollaborator(collabId) {
+      var form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '/manager/project/' + currentTask.projectId + '/task/' + currentTask.id + '/remove-collaborator/' + collabId;
+      form.style.display = 'none';
+      document.body.appendChild(form);
+      form.submit();
+    }
+
+    function addCollaborator() {
+      var select = document.getElementById('addCollaboratorSelect');
+      var empId = select.value;
+      if (!empId) return;
+
+      var form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '/manager/project/' + currentTask.projectId + '/task/' + currentTask.id + '/add-collaborator';
+      form.style.display = 'none';
+      var input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'employee_id';
+      input.value = empId;
+      form.appendChild(input);
+      document.body.appendChild(form);
+      form.submit();
     }
 
     function renderSubtasks() {
@@ -786,7 +958,7 @@
         var skills = (st.competences_requises || []);
 
         var div = document.createElement('div');
-        div.style.cssText = 'display:flex; align-items:flex-start; gap:10px; padding:10px 14px; border-radius:12px; border:1px solid var(--border); background:var(--bg-card-alt); transition: all 0.15s; cursor:pointer;';
+        div.style.cssText = 'display:flex; align-items:flex-start; gap:10px; padding:10px 14px; border-radius:12px; border:1px solid var(--border); background:var(--bg-card-alt); transition: all 0.15s;';
         div.onmouseover = function() { this.style.borderColor = 'var(--primary)'; this.style.background = 'var(--primary-light)'; };
         div.onmouseout = function() { this.style.borderColor = 'var(--border)'; this.style.background = 'var(--bg-card-alt)'; };
 
@@ -794,6 +966,7 @@
         var checkDiv = document.createElement('div');
         checkDiv.className = 'st-check' + (isDone ? ' done' : '');
         checkDiv.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+        checkDiv.style.cursor = 'pointer';
         checkDiv.dataset.idx = i;
         checkDiv.onclick = function(e) {
           e.stopPropagation();
@@ -813,16 +986,53 @@
         nameDiv.textContent = st.nom || 'Sub-task ' + (i + 1);
         contentDiv.appendChild(nameDiv);
 
-        // Bottom row: skills + duration
+        // Bottom row: days editor + skills
         var metaDiv = document.createElement('div');
-        metaDiv.style.cssText = 'display:flex; align-items:center; gap:6px; margin-top:4px; flex-wrap:wrap;';
+        metaDiv.style.cssText = 'display:flex; align-items:center; gap:6px; margin-top:6px; flex-wrap:wrap;';
 
-        if (st.duree_estimee_jours) {
-          var durSpan = document.createElement('span');
-          durSpan.style.cssText = 'font-size:10px; color:var(--fg-muted); display:inline-flex; align-items:center; gap:3px;';
-          durSpan.textContent = '⏱ ' + st.duree_estimee_jours + 'd';
-          metaDiv.appendChild(durSpan);
-        }
+        // Editable days mini-control for each sub-task
+        var daysBox = document.createElement('div');
+        daysBox.style.cssText = 'display:inline-flex; align-items:center; gap:2px; background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:2px 4px;';
+
+        var minusBtn = document.createElement('button');
+        minusBtn.type = 'button';
+        minusBtn.textContent = '−';
+        minusBtn.style.cssText = 'width:20px; height:20px; border:none; background:var(--danger-light); color:var(--danger); border-radius:5px; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1;';
+        minusBtn.dataset.idx = i;
+        minusBtn.onclick = function(e) { e.stopPropagation(); adjustSubTaskDays(parseInt(this.dataset.idx), -1); };
+
+        var dayInput = document.createElement('input');
+        dayInput.type = 'number';
+        dayInput.min = '0';
+        dayInput.value = st.duree_estimee_jours || 0;
+        dayInput.dataset.idx = i;
+        dayInput.style.cssText = 'width:36px; text-align:center; border:none; background:transparent; color:var(--fg); font-size:12px; font-weight:700; outline:none; -moz-appearance:textfield;';
+        dayInput.onchange = function(e) {
+          e.stopPropagation();
+          var idx = parseInt(this.dataset.idx);
+          var val = parseInt(this.value) || 0;
+          if (val < 0) val = 0;
+          currentTask.sousTaches[idx].duree_estimee_jours = val;
+          updateDaysSummary();
+        };
+        dayInput.onclick = function(e) { e.stopPropagation(); };
+
+        var plusBtn = document.createElement('button');
+        plusBtn.type = 'button';
+        plusBtn.textContent = '+';
+        plusBtn.style.cssText = 'width:20px; height:20px; border:none; background:var(--success-light); color:var(--success); border-radius:5px; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1;';
+        plusBtn.dataset.idx = i;
+        plusBtn.onclick = function(e) { e.stopPropagation(); adjustSubTaskDays(parseInt(this.dataset.idx), 1); };
+
+        var dayLabel = document.createElement('span');
+        dayLabel.style.cssText = 'font-size:10px; color:var(--fg-muted); margin-left:2px;';
+        dayLabel.textContent = 'd';
+
+        daysBox.appendChild(minusBtn);
+        daysBox.appendChild(dayInput);
+        daysBox.appendChild(plusBtn);
+        daysBox.appendChild(dayLabel);
+        metaDiv.appendChild(daysBox);
 
         skills.forEach(function(s) {
           if (s) {
@@ -834,15 +1044,10 @@
           }
         });
 
-        if (metaDiv.children.length > 0) contentDiv.appendChild(metaDiv);
+        contentDiv.appendChild(metaDiv);
 
         div.appendChild(checkDiv);
         div.appendChild(contentDiv);
-
-        // Click anywhere on the row to toggle
-        div.onclick = function() {
-          checkDiv.click();
-        };
 
         container.appendChild(div);
       });
@@ -852,12 +1057,91 @@
       progressText.textContent = doneCount + ' of ' + total + ' done';
       progressBar.style.display = 'block';
       progressFill.style.width = pct + '%';
+
+      // Update days summary banner
+      updateDaysSummary();
     }
 
     function closeEditModal() {
       document.getElementById('editTaskModal').classList.add('hidden');
       document.getElementById('editTaskModal').classList.remove('flex');
       document.body.style.overflow = '';
+    }
+
+    /* ── Adjust task total days with +/- buttons ── */
+    function adjustTaskDays(delta) {
+      var input = document.getElementById('editDuree');
+      var newVal = Math.max(1, (parseInt(input.value) || 0) + delta);
+      input.value = newVal;
+      onTaskDaysChanged();
+    }
+
+    /* ── When the task duration changes, redistribute sub-task days proportionally ── */
+    function onTaskDaysChanged() {
+      var newTotal = parseInt(document.getElementById('editDuree').value) || 1;
+      var subs = currentTask.sousTaches || [];
+      if (subs.length === 0) { updateDaysSummary(); return; }
+
+      // Calculate old total from sub-tasks
+      var oldSubTotal = 0;
+      subs.forEach(function(st) { oldSubTotal += (st.duree_estimee_jours || 0); });
+
+      if (oldSubTotal === 0) {
+        // Distribute evenly if no sub-task had days
+        var perSub = Math.floor(newTotal / subs.length);
+        var remainder = newTotal - (perSub * subs.length);
+        subs.forEach(function(st, i) {
+          st.duree_estimee_jours = perSub + (i < remainder ? 1 : 0);
+        });
+      } else {
+        // Proportional redistribution
+        var ratio = newTotal / oldSubTotal;
+        var distributed = 0;
+        subs.forEach(function(st, i) {
+          if (i === subs.length - 1) {
+            // Give the remainder to the last sub-task to avoid rounding errors
+            st.duree_estimee_jours = Math.max(0, newTotal - distributed);
+          } else {
+            var val = Math.max(0, Math.round((st.duree_estimee_jours || 0) * ratio));
+            st.duree_estimee_jours = val;
+            distributed += val;
+          }
+        });
+      }
+
+      renderSubtasks();
+    }
+
+    /* ── Adjust individual sub-task days with +/- buttons ── */
+    function adjustSubTaskDays(idx, delta) {
+      var st = currentTask.sousTaches[idx];
+      var newVal = Math.max(0, (st.duree_estimee_jours || 0) + delta);
+      st.duree_estimee_jours = newVal;
+      renderSubtasks();
+    }
+
+    /* ── Update the days summary banner ── */
+    function updateDaysSummary() {
+      var taskDays = parseInt(document.getElementById('editDuree').value) || 0;
+      var subs = currentTask.sousTaches || [];
+      var subTotal = 0;
+      subs.forEach(function(st) { subTotal += (st.duree_estimee_jours || 0); });
+
+      var banner = document.getElementById('daysSummaryBanner');
+      document.getElementById('taskDaysLabel').textContent = taskDays;
+      document.getElementById('subTaskDaysTotal').textContent = subTotal;
+
+      var warning = document.getElementById('daysMismatchWarning');
+      if (subs.length > 0 && subTotal !== taskDays) {
+        warning.style.display = 'inline-block';
+        warning.textContent = subTotal > taskDays ? '⚠ Over by ' + (subTotal - taskDays) + 'd' : '⚠ Under by ' + (taskDays - subTotal) + 'd';
+        warning.style.background = subTotal > taskDays ? 'var(--danger-light)' : 'var(--warning-light)';
+        warning.style.color = subTotal > taskDays ? 'var(--danger)' : 'var(--warning)';
+      } else {
+        warning.style.display = 'none';
+      }
+
+      banner.style.display = subs.length > 0 ? 'flex' : 'none';
     }
 
     function saveTask() {
@@ -876,7 +1160,10 @@
       })
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        if (data.success) { window.location.reload(); }
+        if (data.success) {
+          // Update the total days stat card before reloading
+          window.location.reload();
+        }
         else { alert('Error: ' + data.error); }
       })
       .catch(function(err) { alert('Error saving task'); });

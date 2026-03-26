@@ -76,3 +76,43 @@ class Task(db.Model):
                 if 'competences_requises' in st:
                     skills.update(st['competences_requises'])
         return list(skills)
+
+    def get_all_assignees(self):
+        """Get primary + all collaborators for this task."""
+        assignees = []
+        if self.assigned_employee:
+            assignees.append({
+                'user': self.assigned_employee,
+                'role': 'primary',
+                'score': self.match_score
+            })
+        for collab in self.collaborators:
+            assignees.append({
+                'user': collab.employee,
+                'role': collab.role,
+                'score': collab.match_score
+            })
+        return assignees
+
+
+class TaskCollaborator(db.Model):
+    """Secondary employees helping on a task (auto-reassigned or manual)."""
+    __tablename__ = 'task_collaborators'
+
+    id = db.Column(db.Integer, primary_key=True)
+    task_id = db.Column(db.Integer, db.ForeignKey('tasks.id', ondelete='CASCADE'), nullable=False)
+    employee_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    role = db.Column(db.String(30), default='helper')  # helper, auto-reassigned
+    match_score = db.Column(db.Float, nullable=True)
+    reason = db.Column(db.String(500), nullable=True)  # Why this employee was reassigned
+    assigned_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationships
+    task = db.relationship('Task', backref=db.backref('collaborators', lazy='select', cascade='all, delete-orphan'))
+    employee = db.relationship('User', backref=db.backref('collaborating_tasks', lazy='dynamic'))
+
+    # Prevent duplicate collaborator entries
+    __table_args__ = (db.UniqueConstraint('task_id', 'employee_id', name='_task_employee_uc'),)
+
+    def __repr__(self):
+        return f'<TaskCollaborator task={self.task_id} emp={self.employee_id} role={self.role}>'

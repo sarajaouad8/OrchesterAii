@@ -1,6 +1,7 @@
 """
 AI-powered task-employee matching using DeepSeek API.
 Supports up to 2 employees per complex task.
+Also handles auto-reassignment when employees complete their tasks.
 """
 
 import os
@@ -8,7 +9,7 @@ import json
 from datetime import datetime
 from models import db
 from models.user import User
-from models.project import Project, Task
+from models.project import Project, Task, TaskCollaborator
 
 # Configure DeepSeek API (new OpenAI client format)
 from openai import OpenAI
@@ -252,10 +253,32 @@ def auto_match_tasks(project_id):
                     })
                     
                 else:
-                    # TODO: Add support for secondary assignee in Task model
-                    # For now, just log it
-                    emp_name = User.query.get(match['employee_id']).full_name
-                    print(f"🤝 Secondary assignee for {task.task_id}: {emp_name} ({match['confidence_score']}%)")
+                    # Secondary assignee → add as collaborator
+                    emp = User.query.get(match['employee_id'])
+                    if emp:
+                        # Check if already a collaborator
+                        existing = TaskCollaborator.query.filter_by(
+                            task_id=task.id, employee_id=match['employee_id']
+                        ).first()
+                        if not existing:
+                            collab = TaskCollaborator(
+                                task_id=task.id,
+                                employee_id=match['employee_id'],
+                                role='helper',
+                                match_score=match['confidence_score'],
+                                reason=match.get('reasoning', 'AI-matched as secondary assignee')
+                            )
+                            db.session.add(collab)
+                        
+                        results.append({
+                            'task_id': task.task_id,
+                            'task_name': task.nom,
+                            'employee_id': match['employee_id'],
+                            'employee_name': emp.full_name,
+                            'score': match['confidence_score'],
+                            'reasoning': match['reasoning'],
+                            'role': 'Helper'
+                        })
         
         db.session.commit()
         return results
@@ -270,3 +293,135 @@ def auto_match_tasks(project_id):
 def ai_match_employee_to_task(task, employees):
     """Legacy function name - redirects to new AI matching."""
     return ai_match_task_to_employees(task, employees)
+
+
+def auto_reassign_employee(employee_id, project_id):
+    """
+    When an employee finishes all their tasks in a project, 
+    auto-reassign them to help on another unfinished task in the SAME project.
+    
+    Logic:
+    1. Check if the employee still has unfinished tasks in this project → if yes, do nothing
+    2. Find unfinished tasks in the project that the employee is NOT already on
+    3. Score by skill match (prefer in_progress tasks over not-started)
+    4. Add the employee as a collaborator (helper) on the best-matching task
+    
+    Returns: dict with reassignment info, or None if no reassignment made.
+    """
+    try:
+        employee = User.query.get(employee_id)
+        if not employee:
+            return None
+        
+        # 1. Check if employee still has UNFINISHED tasks (as primary) in this project
+        remaining = Task.query.filter(
+            Task.project_id == project_id,
+            Task.assigned_employee_id == employee_id,
+            Task.status != 'completed'
+        ).count()
+        
+        if remaining > 0:
+            return None  # Still has work to do
+        
+        # Also check if they're collaborating on any unfinished task in this project
+        remaining_collab = (
+            db.session.query(TaskCollaborator)
+            .join(Task)
+            .filter(
+                Task.project_id == project_id,
+                TaskCollaborator.employee_id == employee_id,
+                Task.status != 'completed'
+            ).count()
+        )
+        
+        if remaining_collab > 0:
+            return None  # Still helping on another task
+        
+        # 2. Find unfinished tasks in this project that this employee is NOT assigned to
+        candidate_tasks = Task.query.filter(
+            Task.project_id == project_id,
+            Task.status != 'completed',
+            Task.assigned_employee_id != employee_id  # Not already the primary
+        ).all()
+        
+        # Filter out tasks where employee is already a collaborator
+        existing_collab_task_ids = set(
+            tc.task_id for tc in TaskCollaborator.query.filter_by(employee_id=employee_id).all()
+        )
+        candidate_tasks = [t for t in candidate_tasks if t.id not in existing_collab_task_ids]
+        
+        if not candidate_tasks:
+            return None  # No available tasks to help on
+        
+        # 3. Score each candidate task by skill match
+        employee_skills = [s.lower() for s in employee.get_all_skills()]
+        
+        scored_tasks = []
+        for task in candidate_tasks:
+            required_skills = [s.lower() for s in task.get_required_skills()]
+            
+            if required_skills and employee_skills:
+                matched = sum(
+                    1 for req in required_skills 
+                    if any(req in skill or skill in req for skill in employee_skills)
+                )
+                skill_score = (matched / len(required_skills)) * 100
+            elif not required_skills:
+                skill_score = 30  # No skills required → anyone can help
+            else:
+                skill_score = 0
+            
+            # Bonus for in_progress tasks (more urgent, employee can contribute immediately)
+            status_bonus = 20 if task.status == 'in_progress' else 0
+            
+            # Bonus for high priority
+            priority_bonus = 0
+            if task.priorite == 'Haute':
+                priority_bonus = 15
+            elif task.priorite == 'Moyenne':
+                priority_bonus = 5
+            
+            total_score = skill_score + status_bonus + priority_bonus
+            
+            scored_tasks.append({
+                'task': task,
+                'score': round(total_score, 1),
+                'skill_score': round(skill_score, 1)
+            })
+        
+        # Sort: highest score first
+        scored_tasks.sort(key=lambda x: -x['score'])
+        
+        # Only reassign if there's a reasonable match (score > 15)
+        best = scored_tasks[0]
+        if best['score'] < 15:
+            return None  # No good match found
+        
+        best_task = best['task']
+        
+        # 4. Add as a collaborator
+        collab = TaskCollaborator(
+            task_id=best_task.id,
+            employee_id=employee_id,
+            role='auto-reassigned',
+            match_score=best['score'],
+            reason=f"{employee.full_name} finished their tasks and was auto-reassigned to help (skill match: {best['skill_score']}%)",
+            assigned_at=datetime.utcnow()
+        )
+        db.session.add(collab)
+        db.session.commit()
+        
+        return {
+            'employee_id': employee_id,
+            'employee_name': employee.full_name,
+            'task_id': best_task.task_id,
+            'task_name': best_task.nom,
+            'score': best['score'],
+            'reason': collab.reason,
+            'primary_assignee': best_task.assigned_employee.full_name if best_task.assigned_employee else 'Unassigned'
+        }
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Auto-reassign error for employee {employee_id}: {e}")
+        return None

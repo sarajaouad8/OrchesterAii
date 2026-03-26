@@ -1,0 +1,396 @@
+{% extends "employee/base.html" %}
+{% block title %}{{ project.nom_projet or project.name }}{% endblock %}
+
+{% block page_heading %}
+<div class="flex items-center gap-4 min-w-0 flex-1 mr-4">
+  <a href="{{ url_for('employee.projects') }}" class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors" style="border: 1px solid var(--border); color: var(--fg-secondary);" onmouseover="this.style.background='var(--primary-light)'" onmouseout="this.style.background='transparent'" title="Back to projects">
+    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+  </a>
+  <div class="min-w-0">
+    <h1 class="text-[18px] font-bold truncate" style="color: var(--fg);">{{ project.nom_projet or project.name }}</h1>
+    <p class="text-[12px] mt-0.5" style="color: var(--fg-muted);">{{ stats.assigned_to_me }} tasks assigned to you · {{ stats.total_tasks }} total</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+/* ── Table ── */
+.tasks-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+.tasks-table thead th {
+  padding: 10px 14px; font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--fg-muted); text-align: left;
+  border-bottom: 1px solid var(--border); white-space: nowrap;
+  background: var(--bg-card); position: sticky; top: 0; z-index: 5;
+}
+.tasks-table tbody td {
+  padding: 12px 14px; font-size: 13px; border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.tasks-table tbody tr { transition: background 0.1s; }
+.tasks-table tbody tr:hover { background: var(--primary-light); }
+.tasks-table tbody tr.mine-row { border-left: 3px solid var(--primary); }
+
+/* ── Status pills ── */
+.status-pill {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px;
+  border-radius: 100px; font-size: 11px; font-weight: 600; cursor: default;
+}
+.status-pill .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.status-done { background: var(--success-light); color: var(--success); }
+.status-done .dot { background: var(--success); }
+.status-progress { background: var(--info-light); color: var(--info); }
+.status-progress .dot { background: var(--info); }
+.status-todo { background: var(--bg-card-alt); color: var(--fg-muted); border: 1px solid var(--border); }
+.status-todo .dot { background: var(--fg-muted); }
+
+/* ── Priority ── */
+.priority-high { background: var(--danger-light); color: var(--danger); }
+.priority-med { background: var(--warning-light); color: var(--warning); }
+.priority-low { background: var(--success-light); color: var(--success); }
+
+/* ── Avatar ── */
+.avatar {
+  width: 26px; height: 26px; border-radius: 50%; display: inline-flex;
+  align-items: center; justify-content: center; font-size: 11px; font-weight: 700;
+  color: #fff; flex-shrink: 0;
+}
+
+/* ── Skill tags ── */
+.skill-tag {
+  display: inline-block; padding: 3px 8px; border-radius: 6px;
+  font-size: 10px; font-weight: 600; margin: 2px;
+  background: var(--primary-light); color: var(--primary);
+}
+
+/* ── Mine pill ── */
+.mine-pill { background: rgba(124,58,237,0.12); color: var(--primary); border: 1px solid var(--border); font-size: 10px; padding: 2px 8px; border-radius: 999px; font-weight: 700; }
+
+/* ── Progress bar ── */
+.progress-bar { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; background: linear-gradient(90deg, var(--primary), var(--success)); }
+
+/* ── Filter tabs ── */
+.filter-tab {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px;
+  border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer;
+  border: none; background: transparent; color: var(--fg-muted); transition: all 0.15s;
+}
+.filter-tab:hover { background: var(--primary-light); color: var(--primary); }
+.filter-tab.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+.filter-count {
+  font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px;
+  background: var(--border); color: var(--fg-muted);
+}
+.filter-tab.active .filter-count { background: var(--primary); color: #fff; }
+
+/* ── Status select ── */
+.status-select {
+  appearance: none; -webkit-appearance: none; -moz-appearance: none;
+  padding: 5px 28px 5px 10px; border-radius: 8px; font-size: 11px; font-weight: 600;
+  border: 1px solid var(--border); outline: none; cursor: pointer;
+  background-repeat: no-repeat; background-position: right 8px center; background-size: 12px;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' stroke='%239b91ab' stroke-width='2' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  transition: all 0.15s;
+}
+.status-select:hover { border-color: var(--primary); }
+.status-select.s-completed { background-color: var(--success-light); color: var(--success); }
+.status-select.s-in_progress { background-color: var(--info-light); color: var(--info); }
+.status-select.s-not_started { background-color: var(--bg-card-alt); color: var(--fg-muted); }
+
+/* ── Input ── */
+.input-field {
+  width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px;
+  background: var(--bg-card-alt); color: var(--fg); font-size: 13px; outline: none; transition: all 0.15s;
+}
+.input-field:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(124,58,237,0.08); }
+{% endblock %}
+
+{% block content %}
+<!-- ─── Stats Row ─── -->
+<div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+  <div class="glass-card p-4 text-center">
+    <div class="text-2xl font-extrabold" style="color: var(--fg);">{{ stats.total_tasks }}</div>
+    <div class="text-[11px] mt-1 font-medium" style="color: var(--fg-muted);">Total Tasks</div>
+  </div>
+  <div class="glass-card p-4 text-center">
+    <div class="text-2xl font-extrabold" style="color: var(--fg-muted);">{{ stats.not_started }}</div>
+    <div class="text-[11px] mt-1 font-medium" style="color: var(--fg-muted);">Not Started</div>
+  </div>
+  <div class="glass-card p-4 text-center">
+    <div class="text-2xl font-extrabold" style="color: var(--info);">{{ stats.in_progress }}</div>
+    <div class="text-[11px] mt-1 font-medium" style="color: var(--fg-muted);">In Progress</div>
+  </div>
+  <div class="glass-card p-4 text-center">
+    <div class="text-2xl font-extrabold" style="color: var(--success);">{{ stats.completed }}</div>
+    <div class="text-[11px] mt-1 font-medium" style="color: var(--fg-muted);">Completed</div>
+  </div>
+  <div class="glass-card p-4 text-center col-span-2 lg:col-span-1">
+    <div class="text-2xl font-extrabold" style="color: var(--primary);">{{ stats.assigned_to_me }}</div>
+    <div class="text-[11px] mt-1 font-medium" style="color: var(--fg-muted);">My Tasks</div>
+  </div>
+</div>
+
+<!-- ─── Project Info ─── -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+  {% if project.resume %}
+  <div class="glass-card p-5">
+    <div class="flex items-center gap-3 mb-3">
+      <div class="w-8 h-8 rounded-xl flex items-center justify-center" style="background: var(--primary-light);">
+        <svg class="w-4 h-4" style="color: var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      </div>
+      <h3 class="text-[14px] font-bold" style="color: var(--fg);">Project Summary</h3>
+    </div>
+    <p class="text-[13px] leading-relaxed" style="color: var(--fg-secondary); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">{{ project.resume }}</p>
+    {% if stats.total_tasks > 0 %}
+    <div class="mt-3">
+      <div class="flex items-center justify-between mb-1.5">
+        <span class="text-[11px] font-semibold" style="color: var(--fg-muted);">Progress</span>
+        <span class="text-[11px] font-bold" style="color: var(--primary);">{{ ((stats.completed * 100 / stats.total_tasks))|round|int }}%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: {{ ((stats.completed * 100 / stats.total_tasks))|round|int }}%;"></div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if project.livrables_attendus %}
+  <div class="glass-card p-5">
+    <div class="flex items-center gap-3 mb-3">
+      <div class="w-8 h-8 rounded-xl flex items-center justify-center" style="background: var(--success-light);">
+        <svg class="w-4 h-4" style="color: var(--success);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <h3 class="text-[14px] font-bold" style="color: var(--fg);">Deliverables</h3>
+      <span class="badge" style="background: var(--success-light); color: var(--success);">{{ project.livrables_attendus|length }}</span>
+    </div>
+    <div class="space-y-2">
+      {% for l in project.livrables_attendus %}
+      <div class="flex items-center gap-2 px-3 py-2 rounded-lg text-[12px]" style="background: var(--bg-card-alt); border: 1px solid var(--border); color: var(--fg);">
+        <svg class="w-3.5 h-3.5 flex-shrink-0" style="color: var(--success);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 12l2 2 4-4"/></svg>
+        {{ l }}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ────── TASKS TABLE ────── -->
+<div class="glass-card overflow-hidden">
+
+  <!-- Table header bar -->
+  <div class="flex items-center justify-between px-5 py-4 flex-wrap gap-3" style="border-bottom: 1px solid var(--border);">
+    <div class="flex items-center gap-3 flex-wrap">
+      <h2 class="text-[15px] font-bold" style="color: var(--fg);">Tasks</h2>
+      <div class="flex items-center gap-1 ml-2 flex-wrap">
+        <button class="filter-tab active" onclick="filterByStatus('', this)" data-filter="all">
+          All <span class="filter-count">{{ stats.total_tasks }}</span>
+        </button>
+        <button class="filter-tab" onclick="filterByStatus('not started', this)" data-filter="not started">
+          <span style="width:6px;height:6px;border-radius:50%;background:var(--fg-muted);display:inline-block;"></span>
+          To Do <span class="filter-count">{{ stats.not_started }}</span>
+        </button>
+        <button class="filter-tab" onclick="filterByStatus('in_progress', this)" data-filter="in_progress">
+          <span style="width:6px;height:6px;border-radius:50%;background:var(--info);display:inline-block;"></span>
+          In Progress <span class="filter-count">{{ stats.in_progress }}</span>
+        </button>
+        <button class="filter-tab" onclick="filterByStatus('completed', this)" data-filter="completed">
+          <span style="width:6px;height:6px;border-radius:50%;background:var(--success);display:inline-block;"></span>
+          Done <span class="filter-count">{{ stats.completed }}</span>
+        </button>
+        <div style="width: 1px; height: 20px; background: var(--border); margin: 0 4px;"></div>
+        <button class="filter-tab" id="mineFilterBtn" onclick="toggleMineFilter(this)" data-mine-active="false">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          My Tasks <span class="filter-count">{{ stats.assigned_to_me }}</span>
+        </button>
+      </div>
+    </div>
+    <div class="relative">
+      <input type="text" id="searchInput" placeholder="Search tasks..."
+        class="input-field" style="width: 200px; padding: 7px 12px 7px 32px; font-size: 12px; border-radius: 10px;"
+        oninput="applyFilters()" />
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style="color: var(--fg-muted);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </div>
+  </div>
+
+  <!-- Table -->
+  {% if tasks %}
+  <div style="overflow-x: auto;">
+    <table class="tasks-table" id="tasksTable">
+      <thead>
+        <tr>
+          <th style="width: 50px;">ID</th>
+          <th style="min-width: 260px;">Task</th>
+          <th style="width: 160px;">Status</th>
+          <th style="width: 100px;">Priority</th>
+          <th style="width: 180px;">Assignee</th>
+          <th style="width: 70px;">Days</th>
+          <th style="width: 160px;">Skills</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for task in tasks %}
+        <tr data-task-id="{{ task.id }}" data-status="{{ task.status }}" data-name="{{ task.nom|lower }}" data-mine="{{ 'yes' if task.id in mine_task_ids else 'no' }}" {% if task.id in mine_task_ids %}class="mine-row"{% endif %}>
+          <!-- ID -->
+          <td>
+            <span class="text-[11px] font-mono font-semibold" style="color: var(--fg-muted);">{{ task.task_id }}</span>
+          </td>
+          <!-- Task Name + subtasks -->
+          <td>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-[13px] font-semibold" style="color: var(--fg);">{{ task.nom }}</span>
+                {% if task.id in mine_task_ids %}<span class="mine-pill">Mine</span>{% endif %}
+              </div>
+              {% if task.sous_taches %}
+              {% set total_st = task.sous_taches|length %}
+              {% set done_st = [] %}
+              {% for st in task.sous_taches %}{% if st.get('completed') %}{% if done_st.append(1) %}{% endif %}{% endif %}{% endfor %}
+              <div class="flex items-center gap-2 mt-1.5">
+                <div class="progress-bar" style="width: 60px; height: 4px;">
+                  <div class="progress-fill" style="width: {% if total_st > 0 %}{{ (done_st|length * 100 / total_st)|round|int }}{% else %}0{% endif %}%;"></div>
+                </div>
+                <span class="text-[10px] font-medium" style="color: var(--fg-muted);">{{ done_st|length }}/{{ total_st }}</span>
+              </div>
+              {% endif %}
+            </div>
+          </td>
+          <!-- Status -->
+          <td>
+            {% if task.id in mine_task_ids %}
+            <form method="POST" action="{{ url_for('employee.update_task_status', task_id=task.id) }}" style="display:inline;">
+              <select name="status" class="status-select s-{{ task.status }}" onchange="this.form.submit()">
+                <option value="not_started" {% if task.status == 'not_started' %}selected{% endif %}>⭘  Not Started</option>
+                <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>◔  In Progress</option>
+                <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>●  Done</option>
+              </select>
+            </form>
+            {% else %}
+            <span class="status-pill {% if task.status == 'completed' %}status-done{% elif task.status == 'in_progress' %}status-progress{% else %}status-todo{% endif %}">
+              <span class="dot"></span>
+              {% if task.status == 'completed' %}Done{% elif task.status == 'in_progress' %}In Progress{% else %}To Do{% endif %}
+            </span>
+            {% endif %}
+          </td>
+          <!-- Priority -->
+          <td>
+            {% if task.priorite %}
+            <span class="badge {% if task.priorite == 'Haute' %}priority-high{% elif task.priorite == 'Basse' %}priority-low{% else %}priority-med{% endif %}">
+              {% if task.priorite == 'Haute' %}🔴{% elif task.priorite == 'Basse' %}🟢{% else %}🟡{% endif %}
+              {{ task.priorite }}
+            </span>
+            {% else %}
+            <span style="color: var(--fg-muted);">—</span>
+            {% endif %}
+          </td>
+          <!-- Assignee -->
+          <td>
+            {% if task.assigned_employee %}
+            <div class="flex items-center gap-2">
+              {% set colors = ['#7c3aed','#10b981','#f59e0b','#3b82f6','#ef4444','#ec4899'] %}
+              {% if task.assigned_employee.profile_pic %}
+              <img src="{{ url_for('employee.profile_pic', filename=task.assigned_employee.profile_pic) }}" alt="{{ task.assigned_employee.full_name }}" class="avatar" style="object-fit: cover; border: 2px solid var(--primary-light);">
+              {% else %}
+              <div class="avatar" style="background: {{ colors[task.assigned_employee.id % 6] }};">
+                {{ task.assigned_employee.full_name[0]|upper }}
+              </div>
+              {% endif %}
+              <div>
+                <span class="text-[12px] font-medium" style="color: var(--fg);">{{ task.assigned_employee.full_name }}</span>
+                {% if task.match_score is not none %}
+                <div class="text-[10px] font-semibold" style="color: {% if task.match_score >= 70 %}var(--success){% elif task.match_score >= 40 %}var(--warning){% else %}var(--fg-muted){% endif %};">
+                  {{ task.match_score|round|int }}% match
+                </div>
+                {% endif %}
+              </div>
+            </div>
+            {% if task.collaborators %}
+            <div class="flex items-center gap-1 mt-1.5 flex-wrap">
+              {% for collab in task.collaborators %}
+              <div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold" style="background: var(--info-light); color: var(--info);">
+                {% if collab.employee.profile_pic %}
+                <img src="{{ url_for('employee.profile_pic', filename=collab.employee.profile_pic) }}" class="w-4 h-4 rounded-full object-cover" alt="">
+                {% else %}
+                <div class="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold text-white" style="background: {{ colors[collab.employee.id % 6] }};">{{ collab.employee.full_name[0]|upper }}</div>
+                {% endif %}
+                {{ collab.employee.full_name.split(' ')[0] }}
+              </div>
+              {% endfor %}
+            </div>
+            {% endif %}
+            {% else %}
+            <span class="text-[12px]" style="color: var(--fg-muted);">Unassigned</span>
+            {% endif %}
+          </td>
+          <!-- Days -->
+          <td>
+            <span class="text-[12px] font-semibold" style="color: var(--fg);">{{ task.duree_estimee_jours or '—' }}{% if task.duree_estimee_jours %}<span style="color:var(--fg-muted);font-weight:400;"> d</span>{% endif %}</span>
+          </td>
+          <!-- Skills -->
+          <td>
+            {% set skills = task.get_required_skills() %}
+            {% if skills %}
+              {% for s in skills[:2] %}
+              <span class="skill-tag">{{ s }}</span>
+              {% endfor %}
+              {% if skills|length > 2 %}
+              <span class="skill-tag" style="background: var(--border); color: var(--fg-muted);">+{{ skills|length - 2 }}</span>
+              {% endif %}
+            {% else %}
+            <span style="color: var(--fg-muted); font-size: 12px;">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <!-- Empty state -->
+  <div class="text-center py-16 px-5">
+    <div class="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style="background: var(--primary-light);">
+      <svg class="w-8 h-8" style="color: var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+      </svg>
+    </div>
+    <h3 class="text-[15px] font-bold mb-1" style="color: var(--fg);">No tasks yet</h3>
+    <p class="text-[13px]" style="color: var(--fg-muted);">Tasks will appear once the project specs are analyzed.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  var currentStatusFilter = '';
+  var mineOnly = false;
+
+  function filterByStatus(status, btn) {
+    currentStatusFilter = status;
+    document.querySelectorAll('.filter-tab[data-filter]').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    applyFilters();
+  }
+
+  function toggleMineFilter(btn) {
+    mineOnly = !mineOnly;
+    btn.dataset.mineActive = mineOnly ? 'true' : 'false';
+    if (mineOnly) { btn.classList.add('active'); } else { btn.classList.remove('active'); }
+    applyFilters();
+  }
+
+  function applyFilters() {
+    var q = (document.getElementById('searchInput').value || '').toLowerCase();
+    document.querySelectorAll('#tasksTable tbody tr').forEach(function(row) {
+      var nameMatch = !q || (row.dataset.name || '').indexOf(q) !== -1;
+      var statusMatch = !currentStatusFilter ||
+        (currentStatusFilter === 'not started' && row.dataset.status === 'not_started') ||
+        (currentStatusFilter === 'in_progress' && row.dataset.status === 'in_progress') ||
+        (currentStatusFilter === 'completed' && row.dataset.status === 'completed');
+      var mineMatch = !mineOnly || row.dataset.mine === 'yes';
+      row.style.display = (nameMatch && statusMatch && mineMatch) ? '' : 'none';
+    });
+  }
+</script>
+{% endblock %}

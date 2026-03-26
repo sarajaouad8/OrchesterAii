@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0e0618" />
   <title>Login - OrchestrAi</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
 
   <!-- Google Font: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -142,8 +143,8 @@
         <!-- Logo + heading -->
         <div class="mb-8 text-center">
           <a href="{{ url_for('main.home') }}" class="mb-6 inline-flex items-center gap-2.5">
-            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/25">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-primary-foreground"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            <div class="flex h-10 w-10 items-center justify-center">
+              <img src="{{ url_for('static', filename='images/logo.png') }}" class="w-full h-full object-contain" alt="OrchestrAi">
             </div>
             <span class="text-xl font-bold tracking-tight text-foreground">OrchestrAi</span>
           </a>

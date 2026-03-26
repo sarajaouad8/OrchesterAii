@@ -1,0 +1,82 @@
+{% extends "employee/base.html" %}
+{% block title %}Projects{% endblock %}
+
+{% block page_heading %}
+<div>
+  <h1 class="text-[18px] font-bold" style="color: var(--fg);">Projects</h1>
+  <p class="text-[12px] mt-0.5" style="color: var(--fg-muted);">Everything you’re on — open a card to see the full task table</p>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+.project-card { position: relative; overflow: hidden; }
+.project-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--primary), var(--info)); }
+.project-card.status-pending::before { background: linear-gradient(90deg, var(--warning), var(--warning)); }
+.project-card.status-in_progress::before { background: linear-gradient(90deg, var(--info), var(--primary)); }
+.project-card.status-completed::before { background: linear-gradient(90deg, var(--success), var(--success)); }
+{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+  <div class="glass-card p-5">
+    <div class="text-2xl font-extrabold" style="color: var(--fg);">{{ stats.total_projects }}</div>
+    <div class="text-[12px] mt-0.5" style="color: var(--fg-muted);">Total</div>
+  </div>
+  <div class="glass-card p-5">
+    <div class="text-2xl font-extrabold" style="color: var(--warning);">{{ stats.pending }}</div>
+    <div class="text-[12px] mt-0.5" style="color: var(--fg-muted);">Pending</div>
+  </div>
+  <div class="glass-card p-5">
+    <div class="text-2xl font-extrabold" style="color: var(--info);">{{ stats.in_progress }}</div>
+    <div class="text-[12px] mt-0.5" style="color: var(--fg-muted);">In progress</div>
+  </div>
+  <div class="glass-card p-5">
+    <div class="text-2xl font-extrabold" style="color: var(--success);">{{ stats.completed }}</div>
+    <div class="text-[12px] mt-0.5" style="color: var(--fg-muted);">Completed</div>
+  </div>
+</div>
+
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h2 class="text-xl font-bold" style="color: var(--fg);">All your projects</h2>
+    <p class="text-[13px]" style="color: var(--fg-muted);">Click a project to open tasks</p>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+  {% for project in projects %}
+  <a href="{{ url_for('employee.project_detail', project_id=project.id) }}" class="project-card glass-card p-5 cursor-pointer status-{{ project.status }} block">
+    <div class="flex items-center justify-between mb-4">
+      <span class="badge" style="
+        {% if project.status == 'completed' %}background: var(--success-light); color: var(--success);
+        {% elif project.status == 'in_progress' %}background: var(--info-light); color: var(--info);
+        {% else %}background: var(--warning-light); color: var(--warning);{% endif %}">
+        <span class="w-1.5 h-1.5 rounded-full" style="
+          {% if project.status == 'completed' %}background: var(--success);
+          {% elif project.status == 'in_progress' %}background: var(--info);
+          {% else %}background: var(--warning);{% endif %}"></span>
+        {{ project.status.replace('_', ' ').title() }}
+      </span>
+    </div>
+    <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-4" style="background: linear-gradient(135deg, var(--primary), var(--info));">
+      <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+    </div>
+    <h3 class="text-[15px] font-bold mb-1" style="color: var(--fg);">{{ project.nom_projet or project.name }}</h3>
+    <p class="text-[12px]" style="color: var(--fg-muted);">Created {{ project.created_at.strftime('%b %d, %Y') }}</p>
+    <div class="flex items-center gap-3 mt-4 pt-4" style="border-top: 1px solid var(--border);">
+      <span class="text-[11px] font-medium" style="color: var(--primary);">View tasks →</span>
+    </div>
+  </a>
+  {% endfor %}
+
+  {% if not projects %}
+  <div class="col-span-full py-16 text-center">
+    <div class="w-20 h-20 mx-auto mb-5 rounded-3xl flex items-center justify-center" style="background: var(--primary-light);">
+      <svg class="w-10 h-10" style="color: var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+    </div>
+    <h3 class="text-lg font-bold mb-2" style="color: var(--fg);">No projects yet</h3>
+    <p class="text-[13px]" style="color: var(--fg-muted);">When your manager assigns you, projects will show here.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,220 @@
+{% extends "employee/base.html" %}
+{% block title %}Overview{% endblock %}
+
+{% block page_heading %}
+<div>
+  <div class="flex items-center gap-2 flex-wrap">
+    <h1 class="text-[18px] font-bold" style="color: var(--fg);">Good {{ greeting }}, {{ session.get('username', 'there') }}!</h1>
+    <span class="animate-float text-2xl" aria-hidden="true">👋</span>
+  </div>
+  <p class="text-[12px] mt-0.5" style="color: var(--fg-muted);">{{ now.strftime('%A, %B %d, %Y') }}</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<div class="glass-card p-6 mb-6 relative overflow-hidden">
+  <div class="absolute top-0 right-0 w-64 h-64 opacity-10 pointer-events-none" style="background: radial-gradient(circle, var(--primary) 0%, transparent 70%);"></div>
+  <div class="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div>
+      <h2 class="text-xl font-bold mb-1" style="color: var(--fg);">Your workspace</h2>
+      <p class="text-[13px] max-w-xl" style="color: var(--fg-muted);">Track your projects, tasks, and progress in one place — same layout as the manager portal, tailored for you.</p>
+    </div>
+    <a href="{{ url_for('employee.projects') }}" class="btn-primary whitespace-nowrap">
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      Open projects
+    </a>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="glass-card stat-card p-5">
+    <div class="relative z-10">
+      <div class="flex items-center justify-between mb-4">
+        <div class="w-12 h-12 rounded-2xl flex items-center justify-center" style="background: linear-gradient(135deg, var(--primary-light), var(--primary-light));">
+          <svg class="w-6 h-6" style="color: var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <span class="badge" style="background: var(--info-light); color: var(--info);">Projects</span>
+      </div>
+      <div class="text-3xl font-extrabold mb-1" style="color: var(--fg);">{{ stats.total_projects or 0 }}</div>
+      <div class="text-[12px] font-medium" style="color: var(--fg-muted);">My projects</div>
+    </div>
+  </div>
+
+  <div class="glass-card stat-card p-5">
+    <div class="relative z-10">
+      <div class="flex items-center justify-between mb-4">
+        <div class="w-12 h-12 rounded-2xl flex items-center justify-center" style="background: var(--info-light);">
+          <svg class="w-6 h-6" style="color: var(--info);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        </div>
+        <span class="badge" style="background: var(--info-light); color: var(--info);">Tasks</span>
+      </div>
+      <div class="text-3xl font-extrabold mb-1" style="color: var(--fg);">{{ stats.total_tasks or 0 }}</div>
+      <div class="text-[12px] font-medium" style="color: var(--fg-muted);">Assigned to you</div>
+    </div>
+  </div>
+
+  <div class="glass-card stat-card p-5">
+    <div class="relative z-10">
+      <div class="flex items-center justify-between mb-4">
+        <div class="w-12 h-12 rounded-2xl flex items-center justify-center" style="background: var(--warning-light);">
+          <svg class="w-6 h-6" style="color: var(--warning);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
+        </div>
+        <span class="badge" style="background: var(--warning-light); color: var(--warning);">Active</span>
+      </div>
+      <div class="text-3xl font-extrabold mb-1" style="color: var(--info);">{{ stats.in_progress or 0 }}</div>
+      <div class="text-[12px] font-medium" style="color: var(--fg-muted);">In progress</div>
+    </div>
+  </div>
+
+  <div class="glass-card stat-card p-5">
+    <div class="relative z-10">
+      <div class="flex items-center justify-between mb-4">
+        <div class="w-12 h-12 rounded-2xl flex items-center justify-center" style="background: var(--success-light);">
+          <svg class="w-6 h-6" style="color: var(--success);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <span class="badge" style="background: var(--success-light); color: var(--success);">Done</span>
+      </div>
+      <div class="text-3xl font-extrabold mb-1" style="color: var(--success);">{{ stats.completed or 0 }}</div>
+      <div class="text-[12px] font-medium" style="color: var(--fg-muted);">Completed tasks</div>
+      <div class="mt-3">
+        <div class="w-full h-2 rounded-full" style="background: var(--border);">
+          <div class="h-full rounded-full transition-all" style="background: var(--success); width: {{ ((stats.completed / stats.total_tasks * 100) if stats.total_tasks else 0)|round|int }}%;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <!-- Left: quick actions + recent -->
+  <div class="lg:col-span-2 space-y-6">
+    <div class="glass-card p-6">
+      <div class="flex items-center justify-between mb-5">
+        <div>
+          <h3 class="text-[15px] font-bold" style="color: var(--fg);">Quick actions</h3>
+          <p class="text-[12px]" style="color: var(--fg-muted);">Jump to your main areas</p>
+        </div>
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: var(--primary-light);">
+          <svg class="w-5 h-5" style="color: var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <a href="{{ url_for('employee.projects') }}" class="quick-action">
+          <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style="background: linear-gradient(135deg, var(--primary), var(--primary-hover));">
+            <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <div>
+            <div class="text-[13px] font-semibold" style="color: var(--fg);">All projects</div>
+            <div class="text-[11px]" style="color: var(--fg-muted);">Current &amp; past work</div>
+          </div>
+        </a>
+        <a href="{{ url_for('employee.profile') }}" class="quick-action">
+          <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style="background: linear-gradient(135deg, var(--success), #059669);">
+            <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div>
+            <div class="text-[13px] font-semibold" style="color: var(--fg);">My profile</div>
+            <div class="text-[11px]" style="color: var(--fg-muted);">Skills &amp; contact info</div>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <div class="glass-card p-6">
+      <div class="flex items-center justify-between mb-5">
+        <div>
+          <h3 class="text-[15px] font-bold" style="color: var(--fg);">Recent tasks</h3>
+          <p class="text-[12px]" style="color: var(--fg-muted);">Latest activity on your assignments</p>
+        </div>
+        <a href="{{ url_for('employee.projects') }}" class="text-[12px] font-semibold" style="color: var(--primary);">View all →</a>
+      </div>
+      {% if recent_tasks %}
+      <div class="space-y-3">
+        {% for t in recent_tasks %}
+        <div class="flex items-center gap-4 p-3 rounded-xl transition-colors" style="border: 1px solid var(--border);" onmouseover="this.style.background='var(--bg-card-alt)'" onmouseout="this.style.background='transparent'">
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background: {% if t.status == 'completed' %}var(--success-light){% elif t.status == 'in_progress' %}var(--info-light){% else %}var(--warning-light){% endif %};">
+            <svg class="w-5 h-5" style="color: {% if t.status == 'completed' %}var(--success){% elif t.status == 'in_progress' %}var(--info){% else %}var(--warning){% endif %};" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-[13px] font-semibold truncate" style="color: var(--fg);">{{ t.task_id }} · {{ t.nom }}</div>
+            <div class="text-[11px] truncate" style="color: var(--fg-muted);">{{ t.project.nom_projet or t.project.name }}</div>
+          </div>
+          <a href="{{ url_for('employee.project_detail', project_id=t.project_id) }}" class="text-[12px] font-semibold flex-shrink-0" style="color: var(--primary);">Open</a>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-10">
+        <p class="text-[13px]" style="color: var(--fg-muted);">No tasks yet. Your manager will assign you.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Right: chart + project breakdown -->
+  <div class="space-y-6">
+    <div class="glass-card p-6">
+      <h3 class="text-[15px] font-bold mb-5" style="color: var(--fg);">Task progress</h3>
+      {% set tt = stats.total_tasks or 0 %}
+      {% set td = stats.completed or 0 %}
+      {% set pct = ((td / tt * 100) if tt else 0)|round|int %}
+      <div class="flex items-center justify-center mb-5">
+        <div class="relative">
+          <svg class="progress-ring w-32 h-32" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="var(--border)" stroke-width="10"/>
+            <circle class="progress-ring-circle" cx="60" cy="60" r="50" fill="none" stroke="var(--success)" stroke-width="10"
+              stroke-dasharray="314" stroke-dashoffset="{{ 314 - (314 * pct / 100) }}"/>
+          </svg>
+          <div class="absolute inset-0 flex items-center justify-center flex-col">
+            <span class="text-2xl font-bold" style="color: var(--fg);">{{ pct }}%</span>
+            <span class="text-[10px]" style="color: var(--fg-muted);">done</span>
+          </div>
+        </div>
+      </div>
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-[12px]" style="color: var(--fg-secondary);">To do</span>
+          <span class="text-[12px] font-semibold" style="color: var(--fg);">{{ stats.not_started or 0 }}</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-[12px]" style="color: var(--fg-secondary);">In progress</span>
+          <span class="text-[12px] font-semibold" style="color: var(--fg);">{{ stats.in_progress or 0 }}</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-[12px]" style="color: var(--fg-secondary);">Completed</span>
+          <span class="text-[12px] font-semibold" style="color: var(--fg);">{{ stats.completed or 0 }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass-card p-6">
+      <h3 class="text-[15px] font-bold mb-4" style="color: var(--fg);">Your projects</h3>
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full" style="background: var(--warning);"></span>
+            <span class="text-[12px]" style="color: var(--fg-secondary);">Pending</span>
+          </div>
+          <span class="text-[12px] font-semibold" style="color: var(--fg);">{{ project_status_counts.pending }}</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full" style="background: var(--info);"></span>
+            <span class="text-[12px]" style="color: var(--fg-secondary);">In progress</span>
+          </div>
+          <span class="text-[12px] font-semibold" style="color: var(--fg);">{{ project_status_counts.in_progress }}</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full" style="background: var(--success);"></span>
+            <span class="text-[12px]" style="color: var(--fg-secondary);">Completed</span>
+          </div>
+          <span class="text-[12px] font-semibold" style="color: var(--fg);">{{ project_status_counts.completed }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

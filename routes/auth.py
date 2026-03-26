@@ -29,7 +29,7 @@ def login():
             if user.role == 'manager':
                 return redirect(url_for('manager.dashboard'))
             else:
-                return redirect(url_for('employee.dashboard'))
+                return redirect(url_for('employee.overview'))
         else:
             flash('Invalid username or password.', 'error')
 
